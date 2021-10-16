@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 def dl_ref(
     out_dir: str,
+    files: Union[tuple, None] = None,
     verbose: bool = True
     ):
     """
@@ -19,10 +20,11 @@ def dl_ref(
     """
     os.makedirs(out_dir, exist_ok=True)
 
-    files = (
-        "ftp://ftp.wwpdb.org/pub/pdb/derived_data/pdb_seqres.txt",
-        "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_protein.faa.gz",
-    )
+    if files is None:
+        files = (
+            "ftp://ftp.wwpdb.org/pub/pdb/derived_data/pdb_seqres.txt",
+            "ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_protein.faa.gz",
+        )
 
     for file in files:
         if verbose:

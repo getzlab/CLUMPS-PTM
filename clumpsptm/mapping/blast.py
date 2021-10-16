@@ -8,6 +8,8 @@ def blast_sequences(
     blast_files: Union[list,str],
     output_dir: Union[None, str] = None,
     db_title: str = "ClumpsRefSeq",
+    blast_dir_name = "blast_dir",
+    seq_db_name = "seq_db",
     verbose: bool = True,
     n_threads: int = 15,
     ):
@@ -19,7 +21,7 @@ def blast_sequences(
 
     Args:
         * db_seq_file: fasta file to use for database with sequences of inputs
-            * ex. PDB sequences
+            * ex. PDB sequences, Uniprot
         * blast_files: file(s) of sequences to blast against
         * output_dir: directory to write outputs to
         * db_title: blast database title
@@ -28,14 +30,14 @@ def blast_sequences(
 
     """
     # Make Blast DIrectory
-    os.makedirs(os.path.join(output_dir, "refseq_blasted"), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, blast_dir_name), exist_ok=True)
 
     # Make Blast Database
-    pdb_db = os.path.join(output_dir, "pdb_db")
-    os.makedirs(pdb_db, exist_ok=True)
+    seq_db = os.path.join(output_dir, seq_db_name)
+    os.makedirs(seq_db, exist_ok=True)
 
     # Make Blast Database
-    cmd = "makeblastdb -in {} -dbtype 'prot' -out {}/pdb_db/pdb_db -title {}".format(db_seq_file, output_dir, "pdb_seq")
+    cmd = "makeblastdb -in {} -dbtype 'prot' -out {}/{}/{} -title {}".format(db_seq_file, output_dir, seq_db_name, seq_db_name, db_title)
     db_out = subprocess.run(cmd, executable='/bin/bash', shell=True, stdout=subprocess.PIPE).stdout.decode()
 
     if verbose: print(db_out)
@@ -47,9 +49,9 @@ def blast_sequences(
 
         cmd = "blastp -query {} -db {} -out {} -outfmt 5 && gzip -f {} ;".format(
             seq,
-            os.path.join(output_dir, "pdb_db", "pdb_db"),
-            os.path.join(os.path.join(output_dir, "refseq_blasted"), "{}.blasted.seq".format(accession_no)),
-            os.path.join(os.path.join(output_dir, "refseq_blasted"), "{}.blasted.seq".format(accession_no))
+            os.path.join(output_dir, seq_db_name, seq_db_name),
+            os.path.join(os.path.join(output_dir, blast_dir_name), "{}.blasted.seq".format(accession_no)),
+            os.path.join(os.path.join(output_dir, blast_dir_name), "{}.blasted.seq".format(accession_no))
         )
         subprocess.call(cmd, executable='/bin/bash', shell=True)
 

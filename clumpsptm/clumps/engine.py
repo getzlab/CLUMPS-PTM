@@ -22,6 +22,7 @@ def clumps(
         * n-iterations
     """
     from sys import stdout
+    import numpy as np
 
     def booster():
         """
@@ -36,7 +37,8 @@ def clumps(
                 break
         return ret
 
-    if seed is not None: np.random.seed(seed)
+    if seed is not None:
+        np.random.seed(seed)
 
     p = [0]*len(xpo_param)
     wap_rnd = [0]*len(xpo_param)

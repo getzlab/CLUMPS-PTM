@@ -15,7 +15,7 @@ def transform_dx(D, xpo_param):
     for soft_thresh_idx in xpo_param:
         den = 2.0 * soft_thresh_idx**2
         m = []
-        for i in range(len(D)-1):
+        for i in range(len(D)):
             mrow = np.zeros(i, dtype=np.float32)
             for j in range(i):
                 mrow[j] = np.exp(-(D[i][j]**2)/den)
@@ -42,7 +42,7 @@ def wap(mut_indices, mvcorr, Mmv, DDt):
                 s[mat] += Mmv[mvcorr[i]][mvcorr[j]] * dcol[mut_indices[j]]
     return s
 
-def init_alg(clumps_input_df):
+def init_alg(clumps_input_df, DDt):
     """
     Initialize CLUMPS algorithm.
     """

@@ -6,6 +6,9 @@ from collections import defaultdict
 from typing import Union
 from scipy.spatial.distance import euclidean
 from .utils import AMINO_ACID_MAP, gunzipper
+from Bio import pairwise2
+import subprocess
+from agutil.parallel import parallelize2
 
 class PdbStore(object):
     """
@@ -83,7 +86,7 @@ class PdbStore(object):
         tmp = [dl_pdb(pdb) for pdb in pdbs_to_download]
         pdb_err = {callback() for callback in tmp}
 
-        print("   * Downloaded {}/{} successfully.".format(len(pdbs_to_download-pdb_err) , len(pdbs_to_download)))
+        print("   * Downloaded {} / {} successfully.".format(len(pdbs_to_download-pdb_err) , len(pdbs_to_download)))
 
         return pdb_err
 
@@ -94,6 +97,8 @@ class PdbStore(object):
         Returns:
             * PDBStream
         """
+        from prody import parsePDBStream
+
         pdb_file = os.path.join(self.pdb_dir, pdb[1:3], "pdb{}.ent.gz".format(pdb))
 
         with gunzipper(pdb_file) as pfile:
@@ -159,3 +164,72 @@ class PdbStore(object):
             return (D, pdb_resids, mapped_pdb_to_aa, co)
         else:
             return (D, pdb_resids, mapped_pdb_to_aa)
+
+class AccessionNo(object):
+    """
+    Accession Number Object.
+    ---------------
+    Stores Accession Number -> PDB mapping.
+    """
+    def __init__(
+        self,
+        accession_number,
+        blast_dir="ref/refseq_blasted",
+        pdb_dir="../../../getzlab-CLUMPS2/clumps/db/ref/pdbs"
+    ):
+        """
+        Args:
+            * x
+        """
+        xpo_param=(3,4.5,6,8,10)
+
+        self.accession_number = accession_number
+        self.blast_dir = blast_dir
+        self.pdb_dir = pdb_dir
+
+        # Get Blasted PDB
+        self.blast = clumpsptm.mp.Blast(os.path.join(self.blast_dir,"{}.blasted.seq.gz".format(self.accession_number)))
+        self.hit = self.blast.hits.iloc[0]
+        self.pdb,self.chain = self.hit['Hit_def'].split(' ')[0].split("_")
+
+        # Get PDB Info
+        pdbstore = clumpsptm.PdbStore(self.pdb_dir)
+        self.D,self.x,self.pdb_resnames = pdbstore.load_dm(self.pdb,self.chain)
+        self.DDt = clumpsptm.transform_dx(self.D, xpo_param)
+
+        # Align PDB Fasta to PDB SEQATOMS
+        self.pdb_structure_idx = np.arange(max(list(self.pdb_resnames.keys())))+1
+        self.pdb_structure_res = np.array(["."]*pdb_idx.shape[0])
+
+        for idx in self.pdb_structure_idx-1:
+            pdb_i = self.pdb_structure_idx[idx]
+            try:
+                self.pdb_structure_res[idx] = AMINO_ACID_MAP[list(self.pdb_resnames[pdb_i])[0]]
+            except:
+                pass
+
+        self.pdb_structure_res = ''.join(self.pdb_structure_res)
+        self.pdb_fasta_alignment = pairwise2.align.globalms(
+            self.hit['Hsp_hseq'],
+            self.pdb_structure_res.replace(".",""),1, -1, -.5, -.1
+        )[0]
+        self.offset = self.get_init_pdb_struct_i(self.pdb_structure_res) - self.get_alignment_offset(self.pdb_fasta_alignment[1])
+
+    def get_init_pdb_struct_i(self, pdb_structure_res):
+        """
+        Get index of first registered atom.
+        """
+        for idx,a in enumerate(pdb_structure_res):
+            if a!='.':
+                return idx+1
+
+    def get_alignment_offset(self, align):
+        """
+        Get offset from Fasta via alignment
+        """
+        c = 0
+        for a in align:
+            if a=='-':
+                c+=1
+            else:
+                return c
