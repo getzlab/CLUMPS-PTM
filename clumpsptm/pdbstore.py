@@ -106,6 +106,18 @@ class PdbStore(object):
 
         return aa
 
+    def load_header(self, pdb, chain=None):
+        """
+        Load PDB header
+
+        Returns:
+            * dict
+        """
+        from prody import parsePDBHeader
+
+        pdb_file = os.path.join(self.pdb_dir, pdb[1:3], "pdb{}.ent.gz".format(pdb))
+        return parsePDBHeader(pdb_file)
+
     def load_rd(self, pdb, chain=None):
         """
         Load residue dict
