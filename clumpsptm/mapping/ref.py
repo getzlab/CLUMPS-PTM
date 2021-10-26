@@ -38,16 +38,31 @@ def dl_ref(
 
 def split_fastas(
     fasta: str,
-    out_dir: str
+    out_dir: str,
+    naming: "cptac"
     ):
     """
     Split fastas into individual files.
     """
     os.makedirs(out_dir, exist_ok=True)
+    errors = list()
 
     with open(fasta, 'r') as f:
         data = f.read().split('>')
 
         for entry in tqdm(data[1:]):
-            with open(os.path.join(out_dir, entry.split(' ')[0]+'.seq'), 'w') as f:
+            if naming=="cptac":
+                f_name = entry.split(' ')[0]+'.seq'
+            elif naming=="uniprot":
+                try:
+                    f_name = entry.split('|')[1]+'.seq'
+                except:
+                    errors.append(entry.split("\n")[0])
+                    continue
+
+            with open(os.path.join(out_dir, f_name), 'w') as f:
                 f.write('>' + entry)
+
+    if naming == "uniprot":
+        print("   * {} sequences not parsed".format(len(errors)))
+        return errors
