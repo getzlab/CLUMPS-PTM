@@ -129,7 +129,7 @@ def main():
             pval, wap_scr, niter = clumps(init_dict, sam, DDt, args.xpo, max_rand=1e4, use_booster=False)
 
             # Output
-            print("     > {} - {} | p-value: {}".format(acc, feature, sum(pval) / (5*niter)))
+            # print("     > {} - {} | p-value: {}".format(acc, feature, sum(pval) / (5*niter)))
             _inputs_df.loc[:,"clumpsptm_niter"] = niter
             _inputs_df.loc[:,"clumpsptm_pval"] = sum(pval) / (5*niter)
 
@@ -160,7 +160,7 @@ def main():
 
     print("   * running using {} threads".format(args.threads))
 
-    accession_nos = np.unique(de_df['accession_number'])[:40]
+    accession_nos = np.unique(de_df['accession_number'])
 
     tmp = [run_clumps(acc) for acc in accession_nos]
     results = [callback() for callback in tmp]
