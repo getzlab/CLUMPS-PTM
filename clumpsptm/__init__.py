@@ -1,5 +1,5 @@
 # Modules
 from . import mapping as mp
 from .pdbstore import PdbStore
-from .samplers import AcetylSampler
+from .samplers import AcetylSampler, PTMSampler
 from .clumps import *

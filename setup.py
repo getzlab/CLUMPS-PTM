@@ -16,4 +16,9 @@ setup(
         "biopython>=1.73",
         "tqdm>=4.32.1"
     ],
+    entry_points={
+        'console_scripts':[
+            'clumpsptm = clumpsptm.__main__:main',
+        ]
+    }
 )
