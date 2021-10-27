@@ -15,20 +15,14 @@ def main():
     parser.add_argument('-w', '--weight', required=True, help='<Required> Weighting for CLUMPS-PTM (ex. logFC).')
     parser.add_argument('-s','--pdbstore',required=True, help='<Required> path to PDBStore directory.')
     parser.add_argument('-o','--output_dir', default=".", help='Output directory.')
-    parser.add_argument(
-        '-x', '--xpo', default=[3, 4.5, 6, 8, 10], type=list,
-        help='Soft threshold parameter for truncated Gaussian.'
-    )
+    parser.add_argument('-x', '--xpo', default=[3, 4.5, 6, 8, 10], type=list,
+        help='Soft threshold parameter for truncated Gaussian.')
     parser.add_argument('--threads', type=int, default=1, help='Number of threads for sampling.')
-    parser.add_argument(
-        '--sampler', default='UniformSampler',
-        help='Sampler to use for Null Model.',
-        choices=('UniformSampler','CoverageSampler','MutspecCoverageSampler', 'AcetylSampler', 'PhosphoSampler')
-    )
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbosity.')
-    parser.add_argument('-f', '--features', nargs="*", help='Assays.', default=None)
-    parser.add_argument('-g', '--grouping', default=None, help='<Required> DE group to use.')
+    parser.add_argument('-f', '--features', nargs="*", default=None, help='Assays to subset for.')
+    parser.add_argument('-g', '--grouping', default=None, help='DE group to use.')
     parser.add_argument('--min_sites', default=3, help='Minimum number of sites.')
+    parser.add_argument('--subset', default=None, help='Subset sites.', choices=('positive','negative'))
     args = parser.parse_args()
 
     print("---------------------------------------------------------")
@@ -73,6 +67,18 @@ def main():
         de_df.drop(columns=np.intersect1d(de_df.columns, mapped_sites_df.columns))
     )
 
+    # Subset for pos/neg sites
+    if args.subset is not None:
+        if args.verbose:
+            print("   * subsetting for {} sites".format(args.subset))
+
+        if args.subset == "positive":
+            de_df = de_df[de_df[args.weight]>0]
+        elif args.subset == "negative":
+            de_df = de_df[de_df[args.weight]<0]
+            de_df[args.weight] = -1 * de_df[args.weight]
+
+    # Subset for min sites
     gb = de_df.groupby("accession_number").size()
     de_df = de_df[de_df["accession_number"].isin(gb[gb>=args.min_sites].index)]
     de_df['pdb_res_i'] = de_df['pdb_res_i'].astype(int)
