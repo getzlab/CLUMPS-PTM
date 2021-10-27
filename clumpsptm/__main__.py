@@ -118,7 +118,7 @@ def main():
                 _res = ["LYS","SER","THR","TYR"]
 
             if _inputs_df.shape[0] ==0:
-                print("     > {} - {} | p-value: {}".format(acc, feature, "no sites."))
+                # print("     > {} - {} | p-value: {}".format(acc, feature, "no sites."))
                 return
 
             # Initialize
