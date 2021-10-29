@@ -33,7 +33,7 @@ def gunzipper(gz_file):
         subprocess.check_call("gzip -dc {} >> {}".format(gz_file, temp_file.name), executable='/bin/bash', shell=True)
         yield temp_file
 
-def generate_clumpsptm_output(output_dir):
+def generate_clumpsptm_output(output_dir, min_sites=3):
     """
     Generate CLUMPS-PTM Output file.
     -------------------------------
@@ -57,14 +57,17 @@ def generate_clumpsptm_output(output_dir):
 
         acc_df = acc_df.join(site_collapse_df)
 
+        # Filter out for min sites
+        acc_df = acc_df[acc_df['clumpsptm_input'].apply(lambda x: len(x.split("+")) >= min_sites)]
+
         # FDR
         _,acc_df['clumpsptm_fdr'],_,_ = multipletests(acc_df['clumpsptm_pval'].astype(float), method='fdr_bh', alpha=0.1)
 
         return acc_df
 
-    ptm_files = glob.glob(os.path.join(output_dir, "*ptm*"))
-    phosph_files = glob.glob(os.path.join(output_dir, "*phosphoproteome*"))
-    acetyl_files = glob.glob(os.path.join(output_dir, "*acetylome*"))
+    ptm_files = glob.glob(os.path.join(output_dir, "*_ptm_clumpsptm*"))
+    phosph_files = glob.glob(os.path.join(output_dir, "*_phosphoproteome_clumpsptm*"))
+    acetyl_files = glob.glob(os.path.join(output_dir, "*_acetylome_clumpsptm*"))
 
     res_df = list()
     if len(ptm_files) > 0:

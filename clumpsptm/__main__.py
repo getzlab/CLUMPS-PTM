@@ -53,7 +53,12 @@ def main():
         except:
             pass
     else:
-        de_df = pd.read_csv(args.input, sep='\t', index_col=0)
+        de_df = pd.read_csv(args.input, sep='\t')
+
+        if 'index' in list(de_df):
+            de_df = de_df.set_index("index")
+        else:
+            de_df = de_df.set_index(list(de_df)[0])
 
     de_df['id'] = de_df['id'].astype(str)
 
