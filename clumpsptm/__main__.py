@@ -21,6 +21,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbosity.')
     parser.add_argument('-f', '--features', nargs="*", default=None, help='Assays to subset for.')
     parser.add_argument('-g', '--grouping', default=None, help='DE group to use.')
+    parser.add_argument('-q', '--use_only_significant_sites', action='store_true', help='Only use significant sites for CLUMPS-PTM.')
     parser.add_argument('--min_sites', default=3, help='Minimum number of sites.')
     parser.add_argument('--subset', default=None, help='Subset sites.', choices=('positive','negative'))
     args = parser.parse_args()
@@ -82,6 +83,12 @@ def main():
         elif args.subset == "negative":
             de_df = de_df[de_df[args.weight]<0]
             de_df[args.weight] = -1 * de_df[args.weight]
+
+    # Subset for significant sites
+    # TODO: allow to select between p-value, fdr, and select threshold
+    if args.use_only_significant_sites:
+        print("   * filtering for significant sites below < 0.1 nominal-pvalue")
+        de_df = de_df[de_df['P.Value']<0.1]
 
     # Subset for min sites
     gb = de_df.groupby("accession_number").size()
