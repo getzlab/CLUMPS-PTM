@@ -1,7 +1,16 @@
 from setuptools import setup
 
+if sys.version_info < (3,6):
+    import warnings
+    print("This python version is not supported:")
+    print(sys.version)
+    print("CLUMPS-PTM requires python 3.6 or greater")
+    sys.exit(1)
+
+from clumpsptm import __version__ as version
+
 setup(
-    name='clumpsptm',
+    name='clumps-ptm',
     author='Shankara Anand',
     author_email='sanand@broadinstitute.org',
     description='CLUMPS-PTM driver gene discovery using 3D protein structure (Getz Lab).',
@@ -12,9 +21,9 @@ setup(
         "pyopenssl>=19.0.0",
         "prody>=1.10.10",
         "lxml>=4.3.4",
-        "canine>=0.1.3",
         "biopython>=1.73",
-        "tqdm>=4.32.1"
+        "tqdm>=4.32.1",
+        "agutil"
     ],
     entry_points={
         'console_scripts':[
