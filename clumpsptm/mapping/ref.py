@@ -59,6 +59,8 @@ def split_fastas(
         for entry in tqdm(data[1:]):
             if naming=="cptac":
                 f_name = entry.split(' ')[0]+'.seq'
+            elif naming=="gencode":
+                f_name = entry.split('|')[0]+'.seq'
             elif naming=="uniprot":
                 try:
                     f_name = entry.split('|')[1]+'.seq'
@@ -180,21 +182,22 @@ def get_pdb_match(sifts_s, acc_df, pdbstore):
 
     return acc_df[[_pdb_res_i,_pdb_res,_pdb_res_match]]
 
-def get_acc_pdb_matches(
-    accession_numbers,
+def get_pdb_matches(
+    proteins,
     ptm_df,
     sifts_df,
     pdbstore,
     out_dir,
-    n_threads
+    n_threads,
+    protein_id = "accession_number"
     ):
     """
-    For a list of accession_numbers, use multi-threading to curate mapped PDB
+    For a list of proteins, use multi-threading to curate mapped PDB
     structures using SIFTS database.
 
     Parameters:
     -----------
-    accession_numbers [ required ]
+    proteins [ required ]
         type: iterable
 
     ptm_df [ required ]
@@ -212,6 +215,10 @@ def get_acc_pdb_matches(
     n_threads [ required ]
         type: int
 
+    protein_id [ optional ]
+        default: accession_number
+        type: str
+
     Returns:
     --------
     set
@@ -224,10 +231,10 @@ def get_acc_pdb_matches(
 
     # Multi-threading function
     @parallelize2(maximum=n_threads)
-    def get_acc_pdb_match(acc):
+    def get_pdb_match_caller(acc):
         """Func for matching"""
         try:
-            acc_df = ptm_df[ptm_df['accession_number']==acc].copy().sort_values("uniprot_res_i")[[
+            acc_df = ptm_df[ptm_df[protein_id]==acc].copy().sort_values("uniprot_res_i")[[
                 'uniprot',
                 'acc_res_i',
                 'acc_res_idx',
@@ -253,7 +260,7 @@ def get_acc_pdb_matches(
                     print("Error loading: {}-{}".format(row["PDB"], row["CHAIN"]))
 
             resd = pd.concat(resd,1)
-            sifts_filt_df['accession_number'] = acc
+            sifts_filt_df['proteins'] = acc
             sifts_filt_df = sifts_filt_df.astype(str)
 
             resd.to_parquet(os.path.join(out_dir, "acc_mapped_sites", "{}.parquet".format(acc)))
@@ -263,7 +270,7 @@ def get_acc_pdb_matches(
         except:
             return acc
 
-    tmp = [get_acc_pdb_match(acc) for acc in accession_numbers]
+    tmp = [get_pdb_match_caller(acc) for acc in proteins]
     err = {callback() for callback in tmp}
 
     return err
