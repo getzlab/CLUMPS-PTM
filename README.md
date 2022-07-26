@@ -12,7 +12,7 @@ _Requires Python 3.6.0 or higher._
 
 ##### PIP
 
-`pip3 install clumpsptm`
+`pip3 install clumps-ptm`
 
 or
 

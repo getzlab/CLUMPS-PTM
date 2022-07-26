@@ -1,4 +1,5 @@
 from setuptools import setup
+import sys
 
 if sys.version_info < (3,6):
     import warnings
