@@ -25,6 +25,48 @@ or
 ## Use
 
 CLUMPS-PTM has 3 general phases of analysis:
-1. __Mapping__: taking input PTM proteomic data and mapping them onto PDB structural data
-2. __CLUMPS__: running the algorithm for identifying statistically significant clustering of PTM sites
-3. __Post-Processing__: post-processing (FDR correction) \& visualization in pymol
+1. __Mapping__: taking input PTM proteomic data and mapping them onto PDB structural data.
+
+  Mapping relies on the source data and involves programmatic calling of `blastp+` depending on the source data-base to map to UNIPROT and ultimately PDB structures. An example notebook that walks through the mapping and demonstrates use of `clumps-ptm` API for running these steps programmatically can be found [here](https://github.com/getzlab/CLUMPS-PTM/blob/main/examples/CPTAC_Mapping_Workflow.ipynb). Once the mapping is performed once for a new data-set, the mapping file is used as the `--maps` flag in `clumpsptm` command (below).
+
+2. __CLUMPS__: running the algorithm for identifying statistically significant clustering of PTM sites.
+
+  CLUMPS-PTM was designed for use with differential expression proteomic data. Due to the nature of drop-out in Mass-Spectrometry data, we opt for using broad changes in PTM levels across sample groups to interrogate "clumping" of modifications. Thus, the input requires out-put from Limma-Voom differential expression.
+
+```{python}
+usage: clumpsptm [-h] -i INPUT -m MAPS -w WEIGHT -s PDBSTORE [-o OUTPUT_DIR]
+                 [-x XPO] [--threads THREADS] [-v]
+                 [-f [FEATURES [FEATURES ...]]] [-g GROUPING] [-q]
+                 [--min_sites MIN_SITES] [--subset {positive,negative}]
+
+Run CLUMPS-PTM.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        <Required> Input file.
+  -m MAPS, --maps MAPS  <Required> Mapping with index as indices that overlap
+                        input.
+  -w WEIGHT, --weight WEIGHT
+                        <Required> Weighting for CLUMPS-PTM (ex. logFC).
+  -s PDBSTORE, --pdbstore PDBSTORE
+                        <Required> path to PDBStore directory.
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        Output directory.
+  -x XPO, --xpo XPO     Soft threshold parameter for truncated Gaussian.
+  --threads THREADS     Number of threads for sampling.
+  -v, --verbose         Verbosity.
+  -f [FEATURES [FEATURES ...]], --features [FEATURES [FEATURES ...]]
+                        Assays to subset for.
+  -g GROUPING, --grouping GROUPING
+                        DE group to use.
+  -q, --use_only_significant_sites
+                        Only use significant sites for CLUMPS-PTM.
+  --min_sites MIN_SITES
+                        Minimum number of sites.
+  --subset {positive,negative}
+                        Subset sites.
+
+```
+
+3. __Post-Processing__: post-processing (FDR correction) \& visualization in Pymol.
