@@ -33,7 +33,7 @@ def gunzipper(gz_file):
         subprocess.check_call("gzip -dc {} >> {}".format(gz_file, temp_file.name), executable='/bin/bash', shell=True)
         yield temp_file
 
-def generate_clumpsptm_output(output_dir, min_sites=3):
+def generate_clumpsptm_output(output_dir, protein_id='accession_number', site_id='variableSites', min_sites=3):
     """
     Generate CLUMPS-PTM Output file.
     -------------------------------
@@ -45,15 +45,15 @@ def generate_clumpsptm_output(output_dir, min_sites=3):
         from statsmodels.stats.multitest import multipletests
 
         acc_df = df[
-            ['geneSymbol','uniprot','accession_number','pdb','chain','clumpsptm_sampler',
+            ['geneSymbol','uniprot', protein_id,'pdb','chain','clumpsptm_sampler',
              'clumpsptm_niter','clumpsptm_pval','clumpsptm_input','clumpsptm_sample']
-        ].set_index("accession_number").drop_duplicates().sort_values('clumpsptm_pval')
+        ].set_index(protein_id).drop_duplicates().sort_values('clumpsptm_pval')
 
 
         site_collapse_df = df.reset_index()[
-            ['accession_number','variableSites','acc_res','acc_res_i',
+            [protein_id,site_id,'acc_res','acc_res_i',
              'uniprot_res_i','uniprot_res','pdb_res_i','pdb_res','value']
-            ].groupby("accession_number").agg(list)
+            ].groupby(protein_id).agg(list)
 
         acc_df = acc_df.join(site_collapse_df)
 

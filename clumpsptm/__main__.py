@@ -24,6 +24,8 @@ def main():
     parser.add_argument('-q', '--use_only_significant_sites', action='store_true', help='Only use significant sites for CLUMPS-PTM.')
     parser.add_argument('--min_sites', default=3, help='Minimum number of sites.')
     parser.add_argument('--subset', default=None, help='Subset sites.', choices=('positive','negative'))
+    parser.add_argument('--protein_id', default="accession_number", help='Unique protein id in input.')
+    parser.add_argument('--site_id', default="variableSites", help='Unique site id in input.')
     args = parser.parse_args()
 
     print("---------------------------------------------------------")
@@ -90,13 +92,13 @@ def main():
         de_df = de_df[de_df['P.Value']<0.1]
 
     # Subset for min sites
-    gb = de_df.groupby("accession_number").size()
-    de_df = de_df[de_df["accession_number"].isin(gb[gb>=args.min_sites].index)]
+    gb = de_df.groupby(args.protein_id).size()
+    de_df = de_df[de_df[args.protein_id].isin(gb[gb>=args.min_sites].index)]
     de_df['pdb_res_i'] = de_df['pdb_res_i'].astype(int)
 
     if args.verbose:
         print("   * {} input sites mapped".format(de_df.shape[0]))
-        print("   * {} proteins with > {} sites".format(np.unique(de_df["accession_number"]).shape[0], args.min_sites))
+        print("   * {} proteins with > {} sites".format(np.unique(de_df[args.protein_id]).shape[0], args.min_sites))
 
     # ----------------------------------
     # Run Clumps
@@ -106,7 +108,7 @@ def main():
         """
         Run CLUMPS PTM.
         """
-        inputs_df = de_df[de_df['accession_number']==acc].copy()
+        inputs_df = de_df[de_df[args.protein_id]==acc].copy()
         inputs_df = inputs_df.sort_values('pdb_res_i')
         pdb, chain = inputs_df.iloc[0][['pdb','chain']]
 
@@ -177,15 +179,15 @@ def main():
 
     print("   * running using {} threads".format(args.threads))
 
-    accession_nos = np.unique(de_df['accession_number'])
+    protein_ids = np.unique(de_df[args.protein_id])
 
-    tmp = [run_clumps(acc) for acc in accession_nos]
+    tmp = [run_clumps(prot) for prot in protein_ids]
     results = [callback() for callback in tmp]
 
     # ----------------------------------
     # Generate Output File
     # ----------------------------------
-    results_df = generate_clumpsptm_output(os.path.join(args.output_dir, "clumpsptm"))
+    results_df = generate_clumpsptm_output(os.path.join(args.output_dir, "clumpsptm"), args.protein_id, args.site_id)
     results_df.to_csv(os.path.join(args.output_dir, "clumpsptm_output.tsv"), sep="\t")
 
 if __name__ == "__main__":
