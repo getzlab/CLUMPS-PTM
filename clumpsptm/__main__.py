@@ -61,9 +61,8 @@ def main():
         else:
             de_df = de_df.set_index(list(de_df)[0])
 
-    de_df['id'] = de_df['id'].astype(str)
-
     if args.grouping is not None:
+        de_df['id'] = de_df['id'].astype(str)
         de_df = de_df[de_df['id']==str(args.grouping)]
     if args.features is not None:
         de_df = de_df[de_df['feature'].isin(args.features)]
