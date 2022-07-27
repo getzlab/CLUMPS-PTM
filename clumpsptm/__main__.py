@@ -170,12 +170,12 @@ def main():
             try:
                 _run("phosphoproteome")
             except:
-               print("     > ERROR for {} - {}".format(acc, "phosphoproteome"))
+                print("     > ERROR for {} - {}".format(acc, "phosphoproteome"))
         if "acetylome" in args.features and "phosphoproteome" in args.features:
             try:
                 _run("ptm")
             except:
-               print("     > ERROR for {} - {}".format(acc, "ptm"))
+                print("     > ERROR for {} - {}".format(acc, "ptm"))
 
     print("   * running using {} threads".format(args.threads))
 
