@@ -58,15 +58,24 @@ def buildPymol(
     pymol.cmd.save(session_name+'.pse')
     os.remove(temp_name)
 
-def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None):
+def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None, include_idx_in_name: bool = False):
     """
     Build Pymol from entry.
     """
-    if 'id' in entry:
-        session_name = entry['geneSymbol']+'_'+entry['clumpsptm_sampler'] + entry['id']
-    else:
-        session_name = entry['geneSymbol']+'_'+entry['clumpsptm_sampler']
+    # Name of Pymol Session
+    session_name = list()
+    if include_idx_in_name:
+        session_name.append(entry.name)
 
+    session_name.append(entry['geneSymbol'])
+    session_name.append(entry['clumpsptm_sampler'])
+
+    if 'id' in entry:
+        session_name.append(entry['id'])
+
+    session_name = '_'.join(session_name)
+
+    # Make directory
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
         session_name = os.path.join(out_dir, session_name)
@@ -87,12 +96,13 @@ def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None):
         acetyl_residues = acetyl_residues
     )
 
-def create_pymols_from_result(results_df: pd.DataFrame, out_dir: str = '.', pval_thresh: float = 0.1):
+def create_pymols_from_result(results_df: pd.DataFrame, out_dir: str = '.', pval_thresh: float = 0.1, include_idx_in_name: bool = False, verbose: bool = False):
     """Create pymol sessions for all results."""
     _df = results_df[results_df['clumpsptm_pval']<pval_thresh]
 
     if out_dir is not '.':
-        print("   * writing out session files to {}".format(out_dir))
+        if verbose:
+            print("   * writing out session files to {}".format(out_dir))
 
     for idx,row in tqdm(_df.iterrows(), total=_df.shape[0]):
-        buildPymol_from_result(row, out_dir=out_dir)
+        buildPymol_from_result(row, out_dir=out_dir, include_idx_in_name=include_idx_in_name)
