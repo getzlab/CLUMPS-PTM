@@ -45,6 +45,7 @@ def buildPymol(
     pymol.cmd.set('ray_trace_mode','3')
     pymol.cmd.color('palecyan', obj_name)
     pymol.cmd.show('surface', obj_name)
+    pymol.cmd.remove('solvent')
 
     if phosph_residues is not None:
         pymol.cmd.show('spheres', 'resi {}'.format('+'.join(phosph_residues)))
