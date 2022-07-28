@@ -62,6 +62,8 @@ def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None, i
     """
     Build Pymol from entry.
     """
+    import ast
+
     # Name of Pymol Session
     session_name = list()
     if include_idx_in_name:
@@ -80,13 +82,24 @@ def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None, i
         os.makedirs(out_dir, exist_ok=True)
         session_name = os.path.join(out_dir, session_name)
 
-    phosph_residues = None
-    acetyl_residues = None
+    phosph_residues = list()
+    acetyl_residues = list()
 
     if entry['clumpsptm_sampler'] == 'phosphoproteome':
         phosph_residues = entry['clumpsptm_input'].split('+')
     elif entry['clumpsptm_sampler'] == 'acetylome':
         acetyl_residues = entry['clumpsptm_input'].split('+')
+    elif entry['clumpsptm_sampler'] == 'ptm':
+        for (res,num) in zip(ast.literal_eval(entry['pdb_res']), entry['clumpsptm_input'].split('+')):
+            if res=='K':
+                acetyl_residues.append(str(num))
+            else:
+                phosph_residues.append(str(num))
+
+    if len(acetyl_residues)==0:
+        acetyl_residues = None
+    if len(phosph_residues)==0:
+        phosph_residues = None
 
     buildPymol(
         entry['pdb'],
