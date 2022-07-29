@@ -31,6 +31,8 @@ class PTMAlphaSampler(object):
     --------------------------
     Takes in pdb residue id (pr) and a mapping default dictionary.
     Samples only from residues that can be acetylated or phosphorylated.
+
+    ****IN PROGRESS****
     """
     def __init__(self, pdb_resid_to_d_map, pdb_resnames, model_confidence, res=['LYS','SER','THR','TYR'], model_threshold=0.75):
         self.resid_to_d_map = pdb_resid_to_d_map
