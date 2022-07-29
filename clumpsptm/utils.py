@@ -83,7 +83,8 @@ def generate_clumpsptm_output(
     protein_id: str = 'accession_number',
     site_id: str = 'variableSites',
     min_sites: int = 3,
-    thresh_min_pval: bool = True
+    thresh_min_pval: bool = True,
+    alphafold: bool = False
     ) -> pd.DataFrame:
     """
     Generate CLUMPS-PTM Output file.
@@ -120,10 +121,16 @@ def generate_clumpsptm_output(
         """Collapser per feature type."""
         from statsmodels.stats.multitest import multipletests
 
-        acc_df = df[
-            ['geneSymbol','uniprot',protein_id,'pdb','chain','clumpsptm_sampler',
-             'clumpsptm_niter','clumpsptm_pval','clumpsptm_input','clumpsptm_sample']
-        ].set_index(protein_id).drop_duplicates().sort_values('clumpsptm_pval')
+        if alphafold:
+            acc_df = df[
+                ['geneSymbol','uniprot',protein_id,'clumpsptm_sampler',
+                 'clumpsptm_niter','clumpsptm_pval','clumpsptm_input','clumpsptm_sample']
+            ].set_index(protein_id).drop_duplicates().sort_values('clumpsptm_pval')
+        else:
+            acc_df = df[
+                ['geneSymbol','uniprot',protein_id,'pdb','chain','clumpsptm_sampler',
+                 'clumpsptm_niter','clumpsptm_pval','clumpsptm_input','clumpsptm_sample']
+            ].set_index(protein_id).drop_duplicates().sort_values('clumpsptm_pval')
 
         site_collapse_df = df.reset_index()[
             [protein_id,site_id,'acc_res','acc_res_i',

@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import os
 from .clumps import transform_dx, init_alg, clumps
-from .pdbstore import PdbStore
+from .pdbstore import PdbStore, AlphaStore
 from .samplers import PTMSampler
 from .utils import generate_clumpsptm_output
 from agutil.parallel import parallelize2
@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--subset', default=None, help='Subset sites.', choices=('positive','negative'))
     parser.add_argument('--protein_id', default="accession_number", help='Unique protein id in input.')
     parser.add_argument('--site_id', default="variableSites", help='Unique site id in input.')
+    parser.add_argument('--alphafold', action='store_true', default=False, help='Run using alphafold structures.')
     args = parser.parse_args()
 
     print("---------------------------------------------------------")
@@ -46,7 +47,10 @@ def main():
         print("   * loading {} mapped sites".format(mapped_sites_df.shape[0]))
 
     # Load PDB Store
-    pdbstore = PdbStore(args.pdbstore)
+    if args.alphafold:
+        pdbstore = AlphaStore(args.pdbstore)
+    else:
+        pdbstore = PdbStore(args.pdbstore)
 
     # Load input file
     if args.input.endswith(".parquet"):
@@ -110,13 +114,20 @@ def main():
         """
         inputs_df = de_df[de_df[args.protein_id]==acc].copy()
         inputs_df = inputs_df.sort_values('pdb_res_i')
-        pdb, chain = inputs_df.iloc[0][['pdb','chain']]
+
+        if args.alphafold:
+            uniprot = inputs_df.iloc[0]['uniprot']
+        else:
+            pdb, chain = inputs_df.iloc[0][['pdb','chain']]
 
         # Rule for multi-site modifications
         inputs_df = inputs_df.sort_values(['pdb_res_i', args.weight], ascending=[True, False]).drop_duplicates('pdb_res_i')
 
         # Get PDB Information
-        D,x,pdb_resnames = pdbstore.load_dm(pdb, chain)
+        if args.alphafold:
+            D,x,pdb_resnames,model_confidence = pdbstore.load_dm(uniprot)
+        else:
+            D,x,pdb_resnames = pdbstore.load_dm(pdb, chain)
         DDt = transform_dx(D, args.xpo)
 
         # Get matched numerical site
@@ -179,6 +190,7 @@ def main():
 
     print("   * running using {} threads".format(args.threads))
 
+    # TODO: CHANGE
     protein_ids = np.unique(de_df[args.protein_id])
 
     tmp = [run_clumps(prot) for prot in protein_ids]
@@ -187,7 +199,12 @@ def main():
     # ----------------------------------
     # Generate Output File
     # ----------------------------------
-    results_df = generate_clumpsptm_output(os.path.join(args.output_dir, "clumpsptm"), args.protein_id, args.site_id)
+    results_df = generate_clumpsptm_output(
+        os.path.join(args.output_dir, "clumpsptm"),
+        args.protein_id,
+        args.site_id,
+        alphafold=args.alphafold
+    )
     results_df.to_csv(os.path.join(args.output_dir, "clumpsptm_output.tsv"), sep="\t")
 
 if __name__ == "__main__":
