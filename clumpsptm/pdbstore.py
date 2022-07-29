@@ -8,6 +8,7 @@ from scipy.spatial.distance import euclidean
 from .utils import AMINO_ACID_MAP, gunzipper
 from Bio import pairwise2
 import subprocess
+import glob
 from agutil.parallel import parallelize2
 
 class PdbStore(object):
@@ -176,6 +177,151 @@ class PdbStore(object):
             return (D, pdb_resids, mapped_pdb_to_aa, co)
         else:
             return (D, pdb_resids, mapped_pdb_to_aa)
+
+class AlphaStore(object):
+    """
+    Alpha Fold Data Bank Directory Store
+    ------------------
+    This object is used to keep track of protein data bank files
+    that are downloaded in a reference directory.
+    """
+    def __init__(self, path):
+        """
+        Args:
+            * path: PDB directory
+
+        """
+        self.pdb_dir = path
+        self.uniprot_dict = {x.split("-")[1]:x for x in glob.glob(os.path.join(self.pdb_dir, "*.pdb.gz"))}
+
+        try:
+            self.tar_file = glob.glob(os.path.join(self.pdb_dir, "*.tar"))[0]
+            self.version = self.tar_file.split(".tar")[0].split("_")[-1]
+        except:
+            pass
+
+    def __str__(self):
+        return "AlphaStore\n   * {} PDB files downloaded\n   * Directory Path: {}".format(len(self.uniprots), self.pdb_dir)
+
+    @property
+    def uniprots(self):
+        """
+        Return downloaded uniprot models.
+        """
+        return list(self.uniprot_dict.keys())
+
+    def load(self, uniprot):
+        """
+        Load residues - amino acids.
+
+        Returns:
+            * PDBStream
+        """
+        from prody import parsePDBStream
+
+        pdb_file = self.uniprot_dict[uniprot]
+
+        with gunzipper(pdb_file) as pfile:
+            aa = parsePDBStream(pfile)
+
+        return aa
+
+    def load_header(self, uniprot):
+        """
+        Load PDB header
+
+        Returns:
+            * dict
+        """
+        from prody import parsePDBHeader
+
+        pdb_file = self.uniprot_dict[uniprot]
+        return parsePDBHeader(pdb_file)
+
+    def scrape_header(self, uniprot):
+        """
+        Scrape PDB header. Just gets alignment information for pdb.
+        """
+        import re
+        import gzip
+
+        header = dict()
+        with gzip.open(self.uniprot_dict[uniprot], mode='rt') as pfile:
+            for line in pfile.readlines():
+                if line[:5] == "DBREF":
+                    l = line.strip()
+                    l = re.split("\s+", l, flags=re.UNICODE)
+                    header[uniprot]["db_first_from"] = int(l[3])
+                    header[uniprot]["db_first_to"] = int(l[8])
+                    header[uniprot]["db_accession"] = l[6]
+                    header[uniprot]["db_ref"] = l[5].replace("UNP","UniProt")
+
+        return header
+
+    def load_rd(self, uniprot):
+        """
+        Load residue dict
+        """
+        aa = self.load(uniprot)
+        res_map = dict(zip(aa.getResnums(),aa.getResnames()))
+        return {k:v for k,v in res_map.items() if v in AMINO_ACID_MAP}
+
+    def load_dm(self, uniprot, point='centroid', return_centroid_coord=False):
+        """
+        Load distance matrix for pdb.
+        """
+        from scipy.spatial.distance import euclidean
+        import numpy as np
+
+        aa = self.load(uniprot)
+
+        xx = aa.getResnums()
+        yy = aa.getCoords()
+        zz = aa.getResnames()
+
+        # Model confidence
+        bb = aa.getBetas()
+
+        pdb_resids = {}
+        for i in range(len(xx)):
+            if zz[i] in AMINO_ACID_MAP:
+                pdb_resids[xx[i]] = True
+
+        mapped_pdb_to_aa = defaultdict(set)
+        model_confidence = defaultdict(float)
+
+        for idx,resnum in enumerate(xx):
+            if resnum in pdb_resids:
+                mapped_pdb_to_aa[resnum].add(zz[idx])
+                model_confidence[resnum] = bb[idx]
+
+        coords = {}
+        for i in range(len(xx)):
+            if xx[i] not in pdb_resids:
+                continue
+            if xx[i] not in coords:
+                coords[xx[i]] = []
+            coords[xx[i]].append(yy[i])  ## add coordinates of an atom belonging to this residue
+
+        ## Euclidean distance matrix
+        D = []
+        for i in range(len(pdb_resids)):
+            D.append(np.zeros(i, dtype=np.float32))
+
+        centroids = {}
+        for k in coords:
+            centroids[k] = np.mean(np.array(coords[k]), 0)
+
+        co = [centroids[i] for i in pdb_resids]  ## pdb residue coordinates
+
+        for i in range(len(pdb_resids)):
+            for j in range(i):
+                D[i][j] = euclidean(co[i], co[j])
+
+        if return_centroid_coord:
+            return (D, pdb_resids, mapped_pdb_to_aa, model_confidence, co)
+        else:
+            return (D, pdb_resids, mapped_pdb_to_aa, model_confidence)
 
 class AccessionNo(object):
     """

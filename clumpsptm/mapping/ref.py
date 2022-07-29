@@ -10,6 +10,7 @@ import pandas as pd
 
 from .blast import Blast
 from ..utils import AMINO_ACID_MAP
+from ..pdbstore import AlphaStore
 
 def dl_ref(
     out_dir: str,
@@ -125,6 +126,68 @@ def get_blast_hits_with_sifts(
             else:
                 _res = hits_in_sifts.iloc[0].copy()
                 _res['sifts'] = True
+
+            _res['blast'] = True
+        except:
+            _res = pd.Series()
+            _res['query'] = bl.query
+            _res['blast'] = False
+
+        res.append(_res)
+
+    return pd.concat(res,1).T.set_index("query")
+
+def get_blast_hits_with_alphafold(
+    blasted_files: list,
+    alphafold_dir: str,
+    filter_only_human: bool = False
+    ):
+    """
+    Takes a list of blasted files, selects top blasted hit cross-referenced
+    with alpha-fold models.
+
+    Parameters:
+    -----------
+    blasted_files [ required ]
+        type: list
+
+    alphafold_dir [ required ]
+        type: str
+
+    filter_only_human [ optional ]
+        default: False
+        type: bool
+
+    Returns:
+    --------
+    pd.DataFrame
+    """
+    import pandas as pd
+
+    alphaStore = AlphaStore(alphafold_dir)
+    uniprots = set(alphaStore.uniprots)
+
+    res = list()
+
+    for bf in tqdm(blasted_files):
+        bl = Blast(bf)
+
+        try:
+            bl.hits.loc[:,'uniprot'] = bl.hits['Hit_def'].apply(lambda x: x.split("|")[1])
+            bl.hits.loc[:,'species'] = bl.hits['Hit_def'].apply(lambda x: x.split("|")[2].split(' ')[0].split("_")[1])
+            bl.hits.loc[:,'query'] = bl.query
+
+            if filter_only_human:
+                bl.hits = bl.hits[bl.hits['species']=='HUMAN']
+
+            hits_in_alphafold = bl.hits[bl.hits['uniprot'].isin(uniprots)]
+
+            if hits_in_alphafold.shape[0] == 0:
+                _res = bl.hits.iloc[0].copy()
+                _res['alphafold'] = False
+            else:
+                _res = hits_in_alphafold.iloc[0].copy()
+                _res['alphafold'] = True
 
             _res['blast'] = True
         except:
@@ -271,6 +334,88 @@ def get_pdb_matches(
             return acc
 
     tmp = [get_pdb_match_caller(acc) for acc in proteins]
+    err = {callback() for callback in tmp}
+
+    return err
+
+def get_pdb_matches_alphafold(
+    proteins,
+    ptm_df,
+    alphaStore,
+    out_dir,
+    n_threads,
+    protein_id: str = "accession_number"
+    ):
+    """
+    For a list of proteins, use multi-threading to curate mapped PDB
+    structures with overlapping residues from AlphaFold structures.
+
+    Parameters:
+    -----------
+    proteins [ required ]
+        type: iterable
+
+    ptm_df [ required ]
+        type: pd.DataFrame
+
+    alphaStore [ required ]
+        type: clumpsptm.pdbstore.AlphaStore
+
+    out_dir [ required ]
+        type: str
+
+    n_threads [ required ]
+        type: int
+
+    protein_id [ optional ]
+        default: accession_number
+        type: str
+
+    Returns:
+    --------
+    set
+        Uniprots with errors in mapping.
+    """
+    # Make directories
+    os.makedirs(out_dir, exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "alphafold_mapped_sites"), exist_ok=True)
+
+    # Multi-threading function
+    @parallelize2(maximum=n_threads)
+    def get_pdb_match_caller(prot):
+        """Func for matching"""
+        try:
+            prot_df = ptm_df[ptm_df[protein_id]==prot].copy().sort_values("uniprot_res_i")[[
+                'uniprot',
+                'acc_res_i',
+                'acc_res_idx',
+                'acc_res',
+                'uniprot_res_i',
+                'uniprot_res',
+                'uniprot_match',
+                'pdb_res_i'
+            ]]
+
+            uniprot = prot_df.iloc[0]['uniprot']
+            rd = alphaStore.load_rd(uniprot)
+
+            pdb_res_row = list()
+            for idx,row in prot_df.iterrows():
+                pdb_res = "X"
+                try:
+                    pdb_res = AMINO_ACID_MAP[rd[row['pdb_res_i']]]
+                except:
+                    pass
+                pdb_res_row.append(pdb_res)
+
+            prot_df.loc[:,'pdb_res'] = pdb_res_row
+            prot_df.to_parquet(os.path.join(out_dir, "alphafold_mapped_sites", "{}.parquet".format(prot)))
+
+            return None
+        except:
+            return prot
+
+    tmp = [get_pdb_match_caller(prot) for prot in proteins]
     err = {callback() for callback in tmp}
 
     return err
