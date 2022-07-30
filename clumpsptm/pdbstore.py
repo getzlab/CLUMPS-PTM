@@ -258,13 +258,23 @@ class AlphaStore(object):
 
         return header
 
-    def load_rd(self, uniprot):
+    def load_rd(self, uniprot, return_model_confidence=False):
         """
         Load residue dict
         """
         aa = self.load(uniprot)
         res_map = dict(zip(aa.getResnums(),aa.getResnames()))
-        return {k:v for k,v in res_map.items() if v in AMINO_ACID_MAP}
+        rd = {k:v for k,v in res_map.items() if v in AMINO_ACID_MAP}
+
+        if return_model_confidence:
+            xx = aa.getResnums()
+            bb = aa.getBetas()
+            model_confidence = {}
+            for idx,num in enumerate(xx):
+                model_confidence[num] = bb[idx]
+            return rd, model_confidence
+        else:
+            return rd
 
     def load_dm(self, uniprot, point='centroid', return_centroid_coord=False):
         """

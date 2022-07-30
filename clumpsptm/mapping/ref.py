@@ -397,18 +397,25 @@ def get_pdb_matches_alphafold(
             ]]
 
             uniprot = prot_df.iloc[0]['uniprot']
-            rd = alphaStore.load_rd(uniprot)
+            rd, model_confidence = alphaStore.load_rd(uniprot, return_model_confidence=True)
 
             pdb_res_row = list()
+            model_confidence_row = list()
+
             for idx,row in prot_df.iterrows():
                 pdb_res = "X"
+                model_conf = 0
                 try:
                     pdb_res = AMINO_ACID_MAP[rd[row['pdb_res_i']]]
+                    model_conf = model_confidence[row['pdb_res_i']]
                 except:
                     pass
+
                 pdb_res_row.append(pdb_res)
+                model_confidence_row.append(model_conf)
 
             prot_df.loc[:,'pdb_res'] = pdb_res_row
+            prot_df.loc[:,'alphafold_confidence'] = model_confidence_row
             prot_df.to_parquet(os.path.join(out_dir, "alphafold_mapped_sites", "{}.parquet".format(prot)))
 
             return None
