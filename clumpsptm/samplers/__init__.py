@@ -1,2 +1,1 @@
-from .acetylome import AcetylSampler
-from .ptm import PTMSampler
+from .ptm import PTMSampler, PTMAlphaSampler

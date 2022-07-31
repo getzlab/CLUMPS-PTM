@@ -32,9 +32,8 @@ class PTMAlphaSampler(object):
     Takes in pdb residue id (pr) and a mapping default dictionary.
     Samples only from residues that can be acetylated or phosphorylated.
 
-    ****IN PROGRESS****
     """
-    def __init__(self, pdb_resid_to_d_map, pdb_resnames, model_confidence, res=['LYS','SER','THR','TYR'], model_threshold=0.75):
+    def __init__(self, pdb_resid_to_d_map, pdb_resnames, model_confidence, res=['LYS','SER','THR','TYR'], model_threshold=75):
         self.resid_to_d_map = pdb_resid_to_d_map
         self.mapping = pdb_resnames
         self.confidence = model_confidence
@@ -43,7 +42,8 @@ class PTMAlphaSampler(object):
         for idx in pdb_resnames.keys():
             try:
                 if list(pdb_resnames[idx])[0] in res:
-                    self.ptm.append(idx)
+                    if model_confidence[idx] >= model_threshold:
+                        self.ptm.append(idx)
             except:
                 pass
 

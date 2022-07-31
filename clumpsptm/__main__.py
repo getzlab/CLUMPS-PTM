@@ -4,7 +4,7 @@ import numpy as np
 import os
 from .clumps import transform_dx, init_alg, clumps
 from .pdbstore import PdbStore, AlphaStore
-from .samplers import PTMSampler
+from .samplers import PTMSampler, PTMAlphaSampler
 from .utils import generate_clumpsptm_output
 from agutil.parallel import parallelize2
 
@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--protein_id', default="accession_number", help='Unique protein id in input.')
     parser.add_argument('--site_id', default="variableSites", help='Unique site id in input.')
     parser.add_argument('--alphafold', action='store_true', default=False, help='Run using alphafold structures.')
+    parser.add_argument('--alphafold_threshold', type=float, default=75, help='Threshold confidence level for alphafold sites.')
     args = parser.parse_args()
 
     print("---------------------------------------------------------")
@@ -95,6 +96,10 @@ def main():
         print("   * filtering for significant sites below < 0.1 nominal-pvalue")
         de_df = de_df[de_df['P.Value']<0.1]
 
+    if args.alphafold:
+        print("   * filtering for sites in residues with > {} % alphafold prediction confidence.".format(args.alphafold_threshold))
+        de_df = de_df[de_df['alphafold_confidence'] >= args.alphafold_threshold]
+
     # Subset for min sites
     gb = de_df.groupby(args.protein_id).size()
     de_df = de_df[de_df[args.protein_id].isin(gb[gb>=args.min_sites].index)]
@@ -128,6 +133,7 @@ def main():
             D,x,pdb_resnames,model_confidence = pdbstore.load_dm(uniprot)
         else:
             D,x,pdb_resnames = pdbstore.load_dm(pdb, chain)
+
         DDt = transform_dx(D, args.xpo)
 
         # Get matched numerical site
@@ -153,7 +159,17 @@ def main():
 
             # Initialize
             init_dict = init_alg(_inputs_df, DDt)
-            sam = PTMSampler(pdb_struct_i_to_d_map, pdb_resnames, res=_res)
+
+            if args.alphafold:
+                sam = PTMAlphaSampler(
+                    pdb_struct_i_to_d_map,
+                    pdb_resnames,
+                    model_confidence,
+                    res=_res,
+                    model_threshold=args.alphafold_threshold
+                )
+            else:
+                sam = PTMSampler(pdb_struct_i_to_d_map, pdb_resnames, res=_res)
 
             # Run CLUMPS
             pval, wap_scr, niter = clumps(init_dict, sam, DDt, args.xpo, max_rand=1e4, use_booster=False)
