@@ -38,6 +38,8 @@ usage: clumpsptm [-h] -i INPUT -m MAPS -w WEIGHT -s PDBSTORE [-o OUTPUT_DIR]
                  [-x XPO] [--threads THREADS] [-v]
                  [-f [FEATURES [FEATURES ...]]] [-g GROUPING] [-q]
                  [--min_sites MIN_SITES] [--subset {positive,negative}]
+                 [--protein_id PROTEIN_ID] [--site_id SITE_ID] [--alphafold]
+                 [--alphafold_threshold ALPHAFOLD_THRESHOLD]
 
 Run CLUMPS-PTM.
 
@@ -66,7 +68,13 @@ optional arguments:
                         Minimum number of sites.
   --subset {positive,negative}
                         Subset sites.
-
+  --protein_id PROTEIN_ID
+                        Unique protein id in input.
+  --site_id SITE_ID     Unique site id in input.
+  --alphafold           Run using alphafold structures.
+  --alphafold_threshold ALPHAFOLD_THRESHOLD
+                        Threshold confidence level for alphafold sites.
+                        
 ```
 
 3. __Post-Processing__: post-processing (FDR correction) \& visualization in Pymol.
