@@ -246,6 +246,8 @@ class AlphaStore(object):
         import gzip
 
         header = dict()
+        header[uniprot] = dict()
+        
         with gzip.open(self.uniprot_dict[uniprot], mode='rt') as pfile:
             for line in pfile.readlines():
                 if line[:5] == "DBREF":
