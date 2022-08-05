@@ -10,7 +10,7 @@ def buildPymol(
     session_name: str,
     phosph_residues: Union[None, list] = None,
     acetyl_residues: Union[None, list] = None,
-    chain_color: str = 'palyecyan',
+    chain_color: str = 'palecyan',
     phosph_color: str = 'deeppurple',
     acetyl_color: str = 'hotpink'
     ):
@@ -43,7 +43,7 @@ def buildPymol(
     pymol.cmd.set('cartoon_transparency','0')
     pymol.cmd.set('transparency','0.7')
     pymol.cmd.set('ray_trace_mode','3')
-    pymol.cmd.color('palecyan', obj_name)
+    pymol.cmd.color(chain_color, obj_name)
     pymol.cmd.show('surface', obj_name)
     pymol.cmd.remove('solvent')
 
