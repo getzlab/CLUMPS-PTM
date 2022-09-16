@@ -18,7 +18,7 @@ or
 
 ##### Git Clone
 
-* `git clone https://github.com/broadinstitute/getzlab-SignatureAnalyzer.git`
+* `git clone https://github.com/broadinstitute/getzlab/CLUMPS-PTM.git`
 * `cd CLUMPS-PTM`
 * `pip3 install -e .`
 
