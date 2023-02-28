@@ -17,6 +17,7 @@ setup(
     author_email='sanand@broadinstitute.org',
     description='CLUMPS-PTM driver gene discovery using 3D protein structure (Getz Lab).',
     install_requires=[
+        "matplotlib>=3.2.1",
         "twobitreader>=3.1.7",
         "statsmodels>=0.9.0",
         "scipy>=1.3.0",
