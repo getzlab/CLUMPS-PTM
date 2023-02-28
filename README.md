@@ -19,7 +19,7 @@ or
 ##### Git Clone
 
 ```
-git clone https://github.com/getzlab/CLUMPS-PTM.git
+git clone git@github.com:getzlab/CLUMPS-PTM.git
 cd CLUMPS-PTM
 pip3 install -e .
 ```
