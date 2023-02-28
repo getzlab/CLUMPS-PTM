@@ -21,7 +21,7 @@ setup(
         'clumpsptm.clumps',
         'clumpsptm.mapping',
         'clumpsptm.vis'
-    ]
+    ],
     install_requires=[
         "matplotlib>=3.2.1",
         "twobitreader>=3.1.7",
