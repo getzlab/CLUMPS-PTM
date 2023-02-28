@@ -1,19 +1,27 @@
 from setuptools import setup
-import sys
+from setuptools import find_namespace_packages
 
-if sys.version_info < (3,6):
-    import warnings
-    print("This python version is not supported:")
-    print(sys.version)
-    print("CLUMPS-PTM requires python 3.6 or greater")
-    sys.exit(1)
+# Load the README file.
+with open(file="README.md", mode="r") as readme_handle:
+    long_description = readme_handle.read()
 
 setup(
     name='clumps-ptm',
     author='Shankara Anand',
-    version="0.0.2",
+    version="0.0.3",
     author_email='sanand@broadinstitute.org',
     description='CLUMPS-PTM driver gene discovery using 3D protein structure (Getz Lab).',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url='https://github.com/getzlab/CLUMPS-PTM',
+    keywords='cancer, bioinformatics, genomics, proteomics, proteins, alphafold, post-translational modifications, phosphorylation, acetylation',
+    python_requires='>=3.6',
+    packages=[
+        'clumpsptm',
+        'clumpsptm.clumps',
+        'clumpsptm.mapping',
+        'clumpsptm.vis'
+    ]
     install_requires=[
         "matplotlib>=3.2.1",
         "twobitreader>=3.1.7",
@@ -30,5 +38,14 @@ setup(
         'console_scripts':[
             'clumpsptm = clumpsptm.__main__:main',
         ]
-    }
+    },
+    classifiers = [
+        "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "Topic :: System :: Proteomics",
+        "Typing :: Typed",
+        "License :: OSI Approved :: MIT License",
+    ],
 )
