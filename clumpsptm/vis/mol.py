@@ -113,7 +113,7 @@ def create_pymols_from_result(results_df: pd.DataFrame, out_dir: str = '.', pval
     """Create pymol sessions for all results."""
     _df = results_df[results_df['clumpsptm_pval']<pval_thresh]
 
-    if out_dir is not '.':
+    if out_dir!='.':
         if verbose:
             print("   * writing out session files to {}".format(out_dir))
 

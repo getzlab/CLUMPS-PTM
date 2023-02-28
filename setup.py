@@ -8,8 +8,6 @@ if sys.version_info < (3,6):
     print("CLUMPS-PTM requires python 3.6 or greater")
     sys.exit(1)
 
-from clumpsptm import __version__ as version
-
 setup(
     name='clumps-ptm',
     author='Shankara Anand',
