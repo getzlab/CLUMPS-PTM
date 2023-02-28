@@ -8,7 +8,7 @@ with open(file="README.md", mode="r") as readme_handle:
 setup(
     name='clumps-ptm',
     author='Shankara Anand',
-    version="0.0.4",
+    version="0.0.5",
     author_email='sanand@broadinstitute.org',
     description='CLUMPS-PTM driver gene discovery using 3D protein structure (Getz Lab).',
     long_description=long_description,
@@ -20,6 +20,7 @@ setup(
         'clumpsptm',
         'clumpsptm.clumps',
         'clumpsptm.mapping',
+        'clumpsptm.samplers',
         'clumpsptm.vis'
     ],
     install_requires=[
