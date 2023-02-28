@@ -44,7 +44,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
-        "Topic :: System :: Proteomics",
         "Typing :: Typed",
         "License :: OSI Approved :: MIT License",
     ],
