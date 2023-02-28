@@ -18,9 +18,11 @@ or
 
 ##### Git Clone
 
-* `git clone https://github.com/broadinstitute/getzlab/CLUMPS-PTM.git`
-* `cd CLUMPS-PTM`
-* `pip3 install -e .`
+```
+git clone https://github.com/getzlab/CLUMPS-PTM.git
+cd CLUMPS-PTM
+pip3 install -e .
+```
 
 ## Use
 
