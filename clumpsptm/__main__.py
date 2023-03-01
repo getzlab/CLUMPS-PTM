@@ -21,7 +21,6 @@ def main():
     parser.add_argument('-x', '--xpo', default=[3, 4.5, 6, 8, 10], type=list,
         help='Soft threshold parameter for truncated Gaussian.')
     parser.add_argument('--threads', type=int, default=1, help='Number of threads for sampling.')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbosity.')
     parser.add_argument('-f', '--features', nargs="*", default=None, help='Assays to subset for.')
     parser.add_argument('-g', '--grouping', default=None, help='DE group to use.')
     parser.add_argument('-q', '--use_only_significant_sites', action='store_true', help='Only use significant sites for CLUMPS-PTM.')
@@ -31,6 +30,7 @@ def main():
     parser.add_argument('--site_id', default="variableSites", help='Unique site id in input.')
     parser.add_argument('--alphafold', action='store_true', default=False, help='Run using alphafold structures.')
     parser.add_argument('--alphafold_threshold', type=float, default=75, help='Threshold confidence level for alphafold sites.')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbosity.')
     args = parser.parse_args()
 
     print("---------------------------------------------------------")

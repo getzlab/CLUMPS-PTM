@@ -338,7 +338,7 @@ class AlphaStore(object):
 
     def load_header(self, uniprot: str):
         """
-        Load AlphaFOld PDBHeader from uniprot string.
+        Load AlphaFold PDBHeader from uniprot string.
 
         Parameters:
         -----------
