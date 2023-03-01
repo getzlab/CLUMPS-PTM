@@ -1,27 +1,33 @@
-import importlib,sys
+# -- import packages: --------------------------------------------------------------------
 import os
-import pandas as pd
 import numpy as np
 from collections import defaultdict
 from typing import Union
 from scipy.spatial.distance import euclidean
-from .utils import AMINO_ACID_MAP, gunzipper
 from Bio import pairwise2
 import subprocess
 import glob
 from agutil.parallel import parallelize2
 
+# -- import local dependencies: ----------------------------------------------------------
+from .utils import AMINO_ACID_MAP, gunzipper
+from .mapping import Blast
+from .clumps import transform_dx
+
 class PdbStore(object):
     """
-    Protein Data Bank Direcotry Store
+    Protein Data Bank Directory Store
     ------------------
     This object is used to keep track of protein data bank files
     that are downloaded in a reference directory.
     """
     def __init__(self, path):
         """
-        Args:
-            * path: PDB directory
+        Parameters:
+        -----------
+        path [ required ]
+            path to pdb directory
+            type: str
 
         """
         self.pdb_root_dir = path
@@ -33,10 +39,13 @@ class PdbStore(object):
     @property
     def downloaded_pdbs(self):
         """
-        Get Downloaded Structures.
-        ------------------
-        Iterates through pdb structure direcotry to find what
-        pdbs are already downloaded. Returns a set of downloaded PDBs.
+        Get Downloaded Structures: 
+        iterates through pdb structure directory to find downloaded pdbs. 
+        
+        Returns:
+        --------
+        downloaded pdbs
+            type: set
         """
         try:
             return {
@@ -50,22 +59,40 @@ class PdbStore(object):
 
     def missing_pdbs(self, pdbs: set):
         """
-        Missing PDBs
-        ------------------
-        Set difference of input pdbs and all downloaded pdbs.
+        Missing PDBs: set difference of input pdbs and all downloaded pdbs.
 
-        Args:
-            * pdbs: set of PDBs
+        Parameters:
+        -----------
+        pdbs
+            set of pdbs to query
+            type: set
+
+        Returns:
+        --------
+        missing pdb structures
+            type: set
         """
         return pdbs - self.downloaded_pdbs
 
-    def download_missing_pdbs(self, pdbs_to_download: Union[set,list], n_threads=15):
+    def download_missing_pdbs(self, pdbs_to_download: Union[set,list], n_threads: int = 15):
         """
         Download Missing PDBs
-        ------------------
-        Args:
-            * pdbs_to_download: a list or set of PDBs to download
-            * n_threads: number of threads to use for downloads
+
+        Parameters:
+        -----------
+        pdbs_to_download
+            list or set of PDBs to download
+            type: [set, list]
+
+        n_threads [optional]
+            number of threads to use for download
+            type: int
+            default: 15
+
+        Returns:
+        --------
+        error msgs from downloads
+            type: set
         """
         if isinstance(pdbs_to_download, list):
             pdbs_to_download = set(pdbs_to_download)
@@ -91,12 +118,25 @@ class PdbStore(object):
 
         return pdb_err
 
-    def load(self, pdb, chain=None):
+    def load(self, pdb: str, chain: str = None):
         """
-        Load residues - amino acids.
+        Load PDBstream from structure.
+
+        Parameters:
+        -----------
+        pdb
+            pdb string
+            type: str
+
+        chain [optional]
+            chain string
+            type: str
 
         Returns:
-            * PDBStream
+        --------
+        loaded pdb stream
+            type: PDBStream
+
         """
         from prody import parsePDBStream
 
@@ -107,33 +147,78 @@ class PdbStore(object):
 
         return aa
 
-    def load_header(self, pdb, chain=None):
+    def load_header(self, pdb: str, chain: str = None):
         """
-        Load PDB header
+        Load PDBHeader from structure.
+
+        Parameters:
+        -----------
+        pdb
+            pdb string
+            type: str
+
+        chain [optional]
+            chain string
+            type: str
 
         Returns:
-            * dict
+        --------
+        loaded pdb header
+            type: PDBHeader
         """
         from prody import parsePDBHeader
 
         pdb_file = os.path.join(self.pdb_dir, pdb[1:3], "pdb{}.ent.gz".format(pdb))
         return parsePDBHeader(pdb_file)
 
-    def load_rd(self, pdb, chain=None):
+    def load_rd(self, pdb: str, chain: str = None):
         """
-        Load residue dict
+        Load residue dictionary from pdb/chain.
+
+        Parameters:
+        -----------
+        pdb
+            pdb str
+            type: str
+
+        chain [optional]
+            chain str
+            type: str
+
+        Returns:
+        --------
+        residue dictionary mapping residue number -> residue name
+            type: dict
         """
         aa = self.load(pdb,chain)
         res_map = dict(zip(aa.getResnums(),aa.getResnames()))
         return {k:v for k,v in res_map.items() if v in AMINO_ACID_MAP}
 
-    def load_dm(self, pdb, chain=None, point='centroid', return_centroid_coord=False):
+    def load_dm(self, pdb: str, chain:str = None, return_centroid_coord: bool = False):
         """
-        Load distance matrix for pdb.
-        """
-        from scipy.spatial.distance import euclidean
-        import numpy as np
+        Load distance matrix for pdb/chain.
 
+        Parameters:
+        -----------
+        pdb
+            pdb str
+            type: str
+
+        chain [optional]
+            chain str
+            type: str
+
+        return_centroid_coord [optional]
+            whether or not to include centroid coordinate
+            type: bool
+            default: False
+
+        Returns:
+        --------
+        euclidean distance matrix, pdb residue IDs, idx to AA mapping, and centroid (optional)
+            type: tuple
+        
+        """
         aa = self.load(pdb,chain=chain)
 
         xx = aa.getResnums()
@@ -184,11 +269,22 @@ class AlphaStore(object):
     ------------------
     This object is used to keep track of protein data bank files
     that are downloaded in a reference directory.
+
+        $ mkdir alphafold_structures
+        $ cd alphafold_structures
+        $ wget https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000005640_9606_HUMAN_v4.tar
+        $ tar -xf UP000005640_9606_HUMAN_v4.tar
+        $ cd ..
+        $ AlphaStore.("alphafold_structures")
+
     """
-    def __init__(self, path):
+    def __init__(self, path: str):
         """
-        Args:
-            * path: PDB directory
+        Parameters:
+        -----------
+        path
+            path to directory with pdbfiles downloaded
+            type: str
 
         """
         self.pdb_dir = path
@@ -206,16 +302,30 @@ class AlphaStore(object):
     @property
     def uniprots(self):
         """
-        Return downloaded uniprot models.
+        Downloaded uniprot proteins.
+
+        Returns:
+        --------
+        uniprots
+            type: list
+
         """
         return list(self.uniprot_dict.keys())
 
-    def load(self, uniprot):
+    def load(self, uniprot: str):
         """
-        Load residues - amino acids.
+        Load PDBStream from uniprot string.
+
+        Parameters:
+        -----------
+        uniprot
+            uniprot str
+            type: str
 
         Returns:
-            * PDBStream
+        --------
+        AlphaFold structure stream
+            type: PDBStream
         """
         from prody import parsePDBStream
 
@@ -226,21 +336,40 @@ class AlphaStore(object):
 
         return aa
 
-    def load_header(self, uniprot):
+    def load_header(self, uniprot: str):
         """
-        Load PDB header
+        Load AlphaFOld PDBHeader from uniprot string.
+
+        Parameters:
+        -----------
+        uniprot
+            uniprot str
+            type: str
 
         Returns:
-            * dict
+        --------
+        AlphaFold structure header
+            type: PDBHeader
         """
         from prody import parsePDBHeader
 
         pdb_file = self.uniprot_dict[uniprot]
         return parsePDBHeader(pdb_file)
 
-    def scrape_header(self, uniprot):
+    def scrape_header(self, uniprot: str):
         """
-        Scrape PDB header. Just gets alignment information for pdb.
+        Scrape PDB header to get database alignment information.
+
+        Parameters:
+        -----------
+        uniprot
+            uniprot str
+            type: str
+
+        Returns:
+        --------
+        Header information for AlphaFold structure
+            type: dict
         """
         import re
         import gzip
@@ -260,9 +389,26 @@ class AlphaStore(object):
 
         return header
 
-    def load_rd(self, uniprot, return_model_confidence=False):
+    def load_rd(self, uniprot: str , return_model_confidence: bool = False):
         """
-        Load residue dict
+        Load residue dictionary from uniprot.
+
+        Parameters:
+        -----------
+        uniprot
+            uniprot str
+            type: str
+
+        return_model_confidence [optional]
+            flag to include model confidence (pLDDT)
+            type: bool
+            default: False
+            note: see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3799472/
+
+        Returns:
+        --------
+        residue dictionary mapping residue number -> residue name, model confidence (optional)
+            type: [dict, tuple]
         """
         aa = self.load(uniprot)
         res_map = dict(zip(aa.getResnums(),aa.getResnames()))
@@ -278,13 +424,26 @@ class AlphaStore(object):
         else:
             return rd
 
-    def load_dm(self, uniprot, point='centroid', return_centroid_coord=False):
+    def load_dm(self, uniprot, return_centroid_coord=False):
         """
-        Load distance matrix for pdb.
-        """
-        from scipy.spatial.distance import euclidean
-        import numpy as np
+        Load AlphaFold distance matrix from uniprot.
 
+        Parameters:
+        -----------
+        uniprot
+            uniprot str
+            type: str
+
+        return_centroid_coord [optional]
+            flag to include centroid cooridnate
+            type: bool
+            default: False
+
+        Returns:
+        --------
+        euclidean distance matrix, pdb residue IDs, idx to AA mapping, model_confidence, and centroid (optional)
+            type: tuple
+        """
         aa = self.load(uniprot)
 
         xx = aa.getResnums()
@@ -340,6 +499,8 @@ class AccessionNo(object):
     Accession Number Object.
     ---------------
     Stores Accession Number -> PDB mapping.
+
+    <<<<DEPRECATED>>>>
     """
     def __init__(
         self,
@@ -347,10 +508,7 @@ class AccessionNo(object):
         blast_dir="ref/refseq_blasted",
         pdb_dir="../../../getzlab-CLUMPS2/clumps/db/ref/pdbs"
     ):
-        """
-        Args:
-            * x
-        """
+        """Previously used class."""
         xpo_param=(3,4.5,6,8,10)
 
         self.accession_number = accession_number
@@ -358,18 +516,18 @@ class AccessionNo(object):
         self.pdb_dir = pdb_dir
 
         # Get Blasted PDB
-        self.blast = clumpsptm.mp.Blast(os.path.join(self.blast_dir,"{}.blasted.seq.gz".format(self.accession_number)))
+        self.blast = Blast(os.path.join(self.blast_dir,"{}.blasted.seq.gz".format(self.accession_number)))
         self.hit = self.blast.hits.iloc[0]
         self.pdb,self.chain = self.hit['Hit_def'].split(' ')[0].split("_")
 
         # Get PDB Info
-        pdbstore = clumpsptm.PdbStore(self.pdb_dir)
+        pdbstore = PdbStore(self.pdb_dir)
         self.D,self.x,self.pdb_resnames = pdbstore.load_dm(self.pdb,self.chain)
-        self.DDt = clumpsptm.transform_dx(self.D, xpo_param)
+        self.DDt = transform_dx(self.D, xpo_param)
 
         # Align PDB Fasta to PDB SEQATOMS
         self.pdb_structure_idx = np.arange(max(list(self.pdb_resnames.keys())))+1
-        self.pdb_structure_res = np.array(["."]*pdb_idx.shape[0])
+        self.pdb_structure_res = np.array(["."]*self.pdb_structure_idx.shape[0])
 
         for idx in self.pdb_structure_idx-1:
             pdb_i = self.pdb_structure_idx[idx]

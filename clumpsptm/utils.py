@@ -1,5 +1,5 @@
+# -- import packages: --------------------------------------------------------------------
 import os
-from gzip import GzipFile
 import contextlib
 import tempfile
 import subprocess
@@ -30,7 +30,8 @@ def gunzipper(gz_file: str):
     Returns:
     --------
     temporary file
-    tempfile.NamedTemporaryFile
+        type: tempfile.NamedTemporaryFile
+    
     """
     with tempfile.NamedTemporaryFile('r', suffix=os.path.splitext(gz_file)[1]) as temp_file:
         subprocess.check_call("gzip -dc {} >> {}".format(gz_file, temp_file.name), executable='/bin/bash', shell=True)
@@ -56,7 +57,7 @@ def add_corrected_fdr(results_df: pd.DataFrame, thresh_num: float = 0.25):
     Returns:
     --------
     results_df with additional columns for corrected FDR
-    pd.DataFrame
+        type: pd.DataFrame
 
     """
     from scipy.special import comb
@@ -114,7 +115,7 @@ def generate_clumpsptm_output(
     Returns:
     --------
     results dataframe
-    pd.DataFrame
+        type: pd.DataFrame
 
     """
     def _collapse_sites(df):

@@ -1,12 +1,15 @@
+# -- import packages: --------------------------------------------------------------------
 import pandas as pd
 import argparse
 import numpy as np
 import os
+from agutil.parallel import parallelize2
+
+# -- import local dependencies: ----------------------------------------------------------
 from .clumps import transform_dx, init_alg, clumps
 from .pdbstore import PdbStore, AlphaStore
 from .samplers import PTMSampler, PTMAlphaSampler
 from .utils import generate_clumpsptm_output
-from agutil.parallel import parallelize2
 
 def main():
     parser = argparse.ArgumentParser(description='Run CLUMPS-PTM.')
