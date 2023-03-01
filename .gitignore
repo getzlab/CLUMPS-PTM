@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# OTHER
+examples/011421_ref/refseq_fastas/*
