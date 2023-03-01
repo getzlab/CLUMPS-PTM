@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 # OTHER
-examples/011421_ref/refseq_fastas/*
+examples/011421_ref
+examples/example_refseq
+examples/mapping_cptac
