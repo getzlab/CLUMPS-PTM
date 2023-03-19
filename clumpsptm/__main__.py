@@ -18,8 +18,7 @@ def main():
     parser.add_argument('-w', '--weight', required=True, help='<Required> Weighting for CLUMPS-PTM (ex. logFC).')
     parser.add_argument('-s','--pdbstore',required=True, help='<Required> path to PDBStore directory.')
     parser.add_argument('-o','--output_dir', default=".", help='Output directory.')
-    parser.add_argument('-x', '--xpo', default=[3, 4.5, 6, 8, 10], type=list,
-        help='Soft threshold parameter for truncated Gaussian.')
+    parser.add_argument('-x', '--xpo', default=[6], type=list, help='Soft distance threshold (t).')
     parser.add_argument('--threads', type=int, default=1, help='Number of threads for sampling.')
     parser.add_argument('-f', '--features', nargs="*", default=None, help='Assays to subset for.')
     parser.add_argument('-g', '--grouping', default=None, help='DE group to use.')
@@ -180,7 +179,7 @@ def main():
             # Output
             # print("     > {} - {} | p-value: {}".format(acc, feature, sum(pval) / (5*niter)))
             _inputs_df.loc[:,"clumpsptm_niter"] = niter
-            _inputs_df.loc[:,"clumpsptm_pval"] = sum(pval) / (5*niter)
+            _inputs_df.loc[:,"clumpsptm_pval"] = sum(pval) / (len(pval)*niter)
 
             res_input = [str(x) for x in _inputs_df['pdb_res_i']]
             res_sample = [str(x) for x in sam.ptm]
@@ -209,11 +208,11 @@ def main():
 
     print("   * running using {} threads".format(args.threads))
 
-    # TODO: CHANGE
+    # Protein IDs to run
     protein_ids = np.unique(de_df[args.protein_id])
 
     tmp = [run_clumps(prot) for prot in protein_ids]
-    results = [callback() for callback in tmp]
+    _ = [callback() for callback in tmp]
 
     # ----------------------------------
     # Generate Output File
