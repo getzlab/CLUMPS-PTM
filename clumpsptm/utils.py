@@ -1,5 +1,5 @@
+# -- import packages: --------------------------------------------------------------------
 import os
-from gzip import GzipFile
 import contextlib
 import tempfile
 import subprocess
@@ -30,13 +30,14 @@ def gunzipper(gz_file: str):
     Returns:
     --------
     temporary file
-    tempfile.NamedTemporaryFile
+        type: tempfile.NamedTemporaryFile
+
     """
     with tempfile.NamedTemporaryFile('r', suffix=os.path.splitext(gz_file)[1]) as temp_file:
         subprocess.check_call("gzip -dc {} >> {}".format(gz_file, temp_file.name), executable='/bin/bash', shell=True)
         yield temp_file
 
-def add_corrected_fdr(results_df: pd.DataFrame, thresh_num: float = 0.25):
+def add_corrected_fdr(results_df: pd.DataFrame, thresh_num: float = 0.1, weight_thresh_by_n: bool = False):
     """
     Creates corrected FDR for clumps-ptm results.
     Due to the sparsity of PTM modifications possible on a given
@@ -53,10 +54,14 @@ def add_corrected_fdr(results_df: pd.DataFrame, thresh_num: float = 0.25):
         threshold for minimum theoretical p-value to consider for FDR
         type: float
 
+    weight_thresh_by_n [ required ]
+        whether to weight threshold for minimum theoretical p-value by hypothesis tested
+        type: bool
+
     Returns:
     --------
     results_df with additional columns for corrected FDR
-    pd.DataFrame
+        type: pd.DataFrame
 
     """
     from scipy.special import comb
@@ -68,8 +73,14 @@ def add_corrected_fdr(results_df: pd.DataFrame, thresh_num: float = 0.25):
         _df_sam = results_df[results_df['clumpsptm_sampler']==sam].copy()
 
         _df_sam['fdr_max_pval'] = _df_sam.apply(lambda row: 1/comb(row['clumpsptm_sample_n'], row['clumpsptm_input_n']), 1)
-        _df_sam['fdr_pass'] = _df_sam['fdr_max_pval'] <= thresh_num
+        if weight_thresh_by_n:
+            _df_sam['fdr_thresh'] = thresh_num / _df_sam.shape[0]
+            _df_sam['fdr_pass'] = _df_sam['fdr_max_pval'] <= thresh_num / _df_sam.shape[0]
+        else:
+            _df_sam['fdr_thresh'] = thresh_num
+            _df_sam['fdr_pass'] = _df_sam['fdr_max_pval'] <= thresh_num
         _df_sam['fdr_corr'] = 1
+
         _,_df_sam.loc[_df_sam['fdr_pass'],'fdr_corr'],_,_ = multipletests(
             _df_sam[_df_sam['fdr_pass']]['clumpsptm_pval'], method='fdr_bh',
         )
@@ -114,7 +125,7 @@ def generate_clumpsptm_output(
     Returns:
     --------
     results dataframe
-    pd.DataFrame
+        type: pd.DataFrame
 
     """
     def _collapse_sites(df):

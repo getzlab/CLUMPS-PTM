@@ -146,6 +146,8 @@ def load_accession_blast(a_num, unique_sites_df):
     """
     a_num
     """
+    import numpy as np
+    
     an_dict = {}
     an_dict['accession_no'] = a_num
 

@@ -1,5 +1,5 @@
+# -- import packages: --------------------------------------------------------------------
 import os
-import sys
 from typing import Union
 import pandas as pd
 from tqdm import tqdm
@@ -15,7 +15,49 @@ def buildPymol(
     acetyl_color: str = 'hotpink'
     ):
     """
-    Build Pymol Session
+    Create a PyMol session using python API.
+
+    Parameters:
+    -----------
+    pdb
+        pdb protein name
+        type: str
+    
+    chain
+        chain of pdb structure
+        type: str
+
+    session_name
+        file name to save as (will append .pse)
+        type: str
+
+    phosph_residues [optional]
+        protein residues to highlight in pymol structure
+        type: [None, list]
+
+    acetyl_residues [optional]
+        protein residues to highlight in pymol structure
+        type: [None, list]
+
+    chain_color [optional]
+        color of entire protein structure
+        type: str
+        default: palecyan
+
+    phosph_color [optional]
+        color of phosph highlighted spheres
+        type: str
+        default: deeppurple
+
+    acetyl_color [optional]
+        color of acetyl highlighted spheres
+        type: str
+        default: hotpink
+
+    Returns:
+    --------
+    None
+
     """
     import __main__
     import tempfile
