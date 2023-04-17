@@ -1,22 +1,81 @@
+# -- import packages: --------------------------------------------------------------------
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
 def dotplot(
-    results_df,
-    y="y",
-    x="clumpsptm_fdr",
-    thresh=0.1,
-    sort_by="ptm",
+    results_df: pd.DataFrame,
+    y: str = "y",
+    x: str = "clumpsptm_fdr",
+    thresh: float = 0.1,
+    sort_by: str = "ptm",
     ax=None,
-    shape_dict = {'ptm':'o', 'phosphoproteome':',', 'acetylome':'^'},
-    name_dict = {'ptm':'Combined', 'phosphoproteome':'Phosphorylation', 'acetylome':'Acetylation'},
-    color_dict = {'fdr':'red', 'pval':'orange', 'nsig':'lightgrey'},
-    title = None,
-    show_gene_only = True,
+    shape_dict: dict = {'ptm':'o', 'phosphoproteome':',', 'acetylome':'^'},
+    name_dict: dict = {'ptm':'Combined', 'phosphoproteome':'Phosphorylation', 'acetylome':'Acetylation'},
+    color_dict: dict = {'fdr':'red', 'pval':'orange', 'nsig':'lightgrey'},
+    title: str = None,
+    show_gene_only: bool = True,
     ):
     """
-    Plot summaryplot for CLUMPS-PTM.
+    Summary dot-plot for CLUMPS-PTM.
+
+    Parameters:
+    -----------
+    results_df
+        results dataframe output from generate_clumpsptm_output
+        type: pd.DataFrame
+
+    y [optional]
+        hit name to plot on y-axis
+        type: str
+        default: "y"
+    
+    x [optional]
+        metric to plot on x-axis
+        type: str
+        default: "clumpsptm_fdr"
+        note: "clumpsptm_fdr" is generated in outputfile
+    
+    thresh [optional]
+        metric threshold for plotting
+        type: float
+        default: 0.1
+        note: cutoff generally used for displaying p-values or q-values
+    
+    sort_by [optional]
+        how to sort values by y-axis (acetylome, phosphoproteom, ptm)
+        type: str
+        default: ptm
+
+    ax [optional]
+        matplotlib axis
+        type: matplotlib.pyplot.Axes
+
+    shape_dict [optional]
+        shape of each PTM type
+        type: dict
+
+    name_dict [optional]
+        legend PTM naming
+        type: dict
+
+    color_dict [optional]
+        color of each PTM type
+        type: dict
+                    
+    title [optional]
+        title on plot
+        type: str
+
+    show_gene_only [optional]
+        whether or not to show gene or protein name
+        type: bool
+        default: True
+
+    Returns:
+    --------
+    None
+
     """
     import matplotlib.patches as mpatches
 
@@ -108,3 +167,4 @@ def dotplot(
         plt.draw()
         labels = [item.get_text().split(" | ")[1] for item in ax.get_yticklabels()]
         ax.set_yticklabels(labels)
+        
