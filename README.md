@@ -1,5 +1,7 @@
 # CLUMPS-PTM
 
+<a href="url"><img src="https://github.com/getzlab/CLUMPS-PTM/blob/main/clumpsptm.png" align="right" width=30% height=30%>
+
 An algorithm for identifying 3D clusters ("clumps") of post-translational modifications (PTMs). Developed for the Clinical Proteomic Tumor Atlas Consortium ([CPTAC](https://proteomics.cancer.gov/programs/cptac)). Full project repoistory for pan-cancer project can be found [here](https://github.com/getzlab/CPTAC_PanCan_2021).
 
 *This tool is still in early development, if you are interested in collaborating, please reach out to the email below.*
@@ -9,6 +11,10 @@ __Author__: Shankara Anand
 __Email__: sanand@broadinstitute.org
 
 _Requires Python 3.6.0 or higher._
+
+
+
+
 
 ## Installation
 
