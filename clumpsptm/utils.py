@@ -181,6 +181,7 @@ def generate_clumpsptm_output(
     ptm_files = glob.glob(os.path.join(output_dir, "*_ptm_clumpsptm*"))
     phosph_files = glob.glob(os.path.join(output_dir, "*_phosphoproteome_clumpsptm*"))
     acetyl_files = glob.glob(os.path.join(output_dir, "*_acetylome_clumpsptm*"))
+    ubiq_files = glob.glob(os.path.join(output_dir, "*_ubiquitylome_clumpsptm*"))
 
     res_df = list()
     if len(ptm_files) > 0:
@@ -200,6 +201,12 @@ def generate_clumpsptm_output(
         clumps_acetyl_df['clumpsptm_sampler'] = "acetylome"
         clumps_acetyl_df = _collapse_sites(clumps_acetyl_df)
         res_df.append(clumps_acetyl_df)
+
+    if len(ubiq_files) > 0:
+        clumps_ubiq_df = pd.concat([pd.read_parquet(x) for x in ubiq_files])
+        clumps_ubiq_df['clumpsptm_sampler'] = "ubiquitylome"
+        clumps_ubiq_df = _collapse_sites(clumps_ubiq_df)
+        res_df.append(clumps_ubiq_df)
 
     if len(res_df) == 0:
         raise ValueError('NO RESULTS FILES FOUND.')

@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--site_id', default="variableSites", help='Unique site id in input.')
     parser.add_argument('--alphafold', action='store_true', default=False, help='Run using alphafold structures.')
     parser.add_argument('--alphafold_threshold', type=float, default=75, help='Threshold confidence level for alphafold sites.')
+    parser.add_argument('-t','--test', action='store_true', default=False, help='Test run with n=5 proteins.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbosity.')
     args = parser.parse_args()
 
@@ -148,6 +149,9 @@ def main():
             if feature == "acetylome":
                 _inputs_df = inputs_df[inputs_df["feature"]==feature].copy()
                 _res = ["LYS"]
+            elif feature == "ubiquitylome":
+                _inputs_df = inputs_df[inputs_df["feature"]==feature].copy()
+                _res = ["LYS"]
             elif feature == "phosphoproteome":
                 _inputs_df = inputs_df[inputs_df["feature"]==feature].copy()
                 _res = ["SER","THR","TYR"]
@@ -155,7 +159,7 @@ def main():
                 _inputs_df = inputs_df.copy()
                 _res = ["LYS","SER","THR","TYR"]
 
-            if _inputs_df.shape[0] ==0:
+            if _inputs_df.shape[0] == 0:
                 # print("     > {} - {} | p-value: {}".format(acc, feature, "no sites."))
                 return
 
@@ -195,12 +199,17 @@ def main():
                 _run("acetylome")
             except:
                 print("     > ERROR for {} - {}".format(acc, "acetylome"))
+        if "ubiquitylome" in args.features:
+            try:
+                _run("ubiquitylome")
+            except:
+                print("     > ERROR for {} - {}".format(acc, "ubquitylome"))
         if "phosphoproteome" in args.features:
             try:
                 _run("phosphoproteome")
             except:
                 print("     > ERROR for {} - {}".format(acc, "phosphoproteome"))
-        if "acetylome" in args.features and "phosphoproteome" in args.features:
+        if "combined" in args.features:
             try:
                 _run("ptm")
             except:
@@ -210,6 +219,10 @@ def main():
 
     # Protein IDs to run
     protein_ids = np.unique(de_df[args.protein_id])
+
+    if args.test:
+        print("   * running TEST of 5 proteins".format(args.threads))
+        protein_ids = protein_ids[:5]
 
     tmp = [run_clumps(prot) for prot in protein_ids]
     _ = [callback() for callback in tmp]
