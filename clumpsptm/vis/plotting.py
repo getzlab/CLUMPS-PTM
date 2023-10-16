@@ -10,8 +10,8 @@ def dotplot(
     thresh: float = 0.1,
     sort_by: str = "ptm",
     ax=None,
-    shape_dict: dict = {'ptm':'o', 'phosphoproteome':',', 'acetylome':'^'},
-    name_dict: dict = {'ptm':'Combined', 'phosphoproteome':'Phosphorylation', 'acetylome':'Acetylation'},
+    shape_dict: dict = {'ptm':'o', 'phosphoproteome':',', 'acetylome':'^', 'ubiquitylome':'*'},
+    name_dict: dict = {'ptm':'Combined', 'phosphoproteome':'Phosphorylation', 'acetylome':'Acetylation', 'ubiquitylome':'Ubiquitination'},
     color_dict: dict = {'fdr':'red', 'pval':'orange', 'nsig':'lightgrey'},
     title: str = None,
     show_gene_only: bool = True,
@@ -29,19 +29,19 @@ def dotplot(
         hit name to plot on y-axis
         type: str
         default: "y"
-    
+
     x [optional]
         metric to plot on x-axis
         type: str
         default: "clumpsptm_fdr"
         note: "clumpsptm_fdr" is generated in outputfile
-    
+
     thresh [optional]
         metric threshold for plotting
         type: float
         default: 0.1
         note: cutoff generally used for displaying p-values or q-values
-    
+
     sort_by [optional]
         how to sort values by y-axis (acetylome, phosphoproteom, ptm)
         type: str
@@ -62,7 +62,7 @@ def dotplot(
     color_dict [optional]
         color of each PTM type
         type: dict
-                    
+
     title [optional]
         title on plot
         type: str
@@ -167,4 +167,3 @@ def dotplot(
         plt.draw()
         labels = [item.get_text().split(" | ")[1] for item in ax.get_yticklabels()]
         ax.set_yticklabels(labels)
-        
