@@ -10,9 +10,11 @@ def buildPymol(
     session_name: str,
     phosph_residues: Union[None, list] = None,
     acetyl_residues: Union[None, list] = None,
+    ubiq_residues: Union[None, list] = None,
     chain_color: str = 'palecyan',
     phosph_color: str = 'deeppurple',
-    acetyl_color: str = 'hotpink'
+    acetyl_color: str = 'hotpink',
+    ubiq_color: str = 'red'
     ):
     """
     Create a PyMol session using python API.
@@ -22,7 +24,7 @@ def buildPymol(
     pdb
         pdb protein name
         type: str
-    
+
     chain
         chain of pdb structure
         type: str
@@ -97,6 +99,10 @@ def buildPymol(
         pymol.cmd.show('spheres', 'resi {}'.format('+'.join(acetyl_residues)))
         pymol.cmd.color(acetyl_color, 'resi {}'.format('+'.join(acetyl_residues)))
 
+    if ubiq_residues is not None:
+        pymol.cmd.show('spheres', 'resi {}'.format('+'.join(ubiq_residues)))
+        pymol.cmd.color(ubiq_color, 'resi {}'.format('+'.join(ubiq_residues)))
+
     pymol.cmd.save(session_name+'.pse')
     os.remove(temp_name)
 
@@ -126,29 +132,36 @@ def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None, i
 
     phosph_residues = list()
     acetyl_residues = list()
+    ubiq_residues = list()
 
     if entry['clumpsptm_sampler'] == 'phosphoproteome':
         phosph_residues = entry['clumpsptm_input'].split('+')
     elif entry['clumpsptm_sampler'] == 'acetylome':
         acetyl_residues = entry['clumpsptm_input'].split('+')
+    elif entry['clumpsptm_sampler'] == 'ubiquitylome':
+        ubiq_residues = entry['clumpsptm_input'].split('+')
     elif entry['clumpsptm_sampler'] == 'ptm':
+        # Fix for ubiquitylation sites
         for (res,num) in zip(ast.literal_eval(entry['pdb_res']), entry['clumpsptm_input'].split('+')):
             if res=='K':
                 acetyl_residues.append(str(num))
             else:
                 phosph_residues.append(str(num))
 
-    if len(acetyl_residues)==0:
-        acetyl_residues = None
     if len(phosph_residues)==0:
         phosph_residues = None
+    if len(acetyl_residues)==0:
+        acetyl_residues = None
+    if len(ubiq_residues)==0:
+        ubiq_residues = None
 
     buildPymol(
         entry['pdb'],
         entry['chain'],
         session_name,
         phosph_residues = phosph_residues,
-        acetyl_residues = acetyl_residues
+        acetyl_residues = acetyl_residues,
+        ubiq_residues = ubiq_residues
     )
 
 def create_pymols_from_result(results_df: pd.DataFrame, out_dir: str = '.', pval_thresh: float = 0.1, include_idx_in_name: bool = False, verbose: bool = False):
