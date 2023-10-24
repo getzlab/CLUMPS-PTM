@@ -106,6 +106,139 @@ def buildPymol(
     pymol.cmd.save(session_name+'.pse')
     os.remove(temp_name)
 
+def buildAlphaPymol(
+    uniprot: str,
+    alphaStore,
+    session_name: str,
+    phosph_residues: Union[None, list] = None,
+    acetyl_residues: Union[None, list] = None,
+    ubiq_residues: Union[None, list] = None,
+    chain_color: str = 'palecyan',
+    phosph_color: str = 'deeppurple',
+    acetyl_color: str = 'hotpink',
+    ubiq_color: str = 'red',
+    color_chain_by_confidence: bool = False,
+    ):
+    """
+    Create a PyMol session using python API.
+
+    Parameters:
+    -----------
+    uniprot
+        uniprot ID
+        type: str
+
+    alphaStore
+        alphaStore with downloaded structures
+        type: AlphaStore
+
+    session_name
+        file name to save as (will append .pse)
+        type: str
+
+    phosph_residues [optional]
+        protein residues to highlight in pymol structure
+        type: [None, list]
+
+    acetyl_residues [optional]
+        protein residues to highlight in pymol structure
+        type: [None, list]
+
+    chain_color [optional]
+        color of entire protein structure
+        type: str
+        default: palecyan
+
+    phosph_color [optional]
+        color of phosph highlighted spheres
+        type: str
+        default: deeppurple
+
+    acetyl_color [optional]
+        color of acetyl highlighted spheres
+        type: str
+        default: hotpink
+
+    Returns:
+    --------
+    None
+
+    """
+    import __main__
+    import tempfile
+    import os
+
+    # Quiet and no GUI
+    __main__.pymol_argv = [ 'pymol', '-qc']
+
+    import pymol
+
+    pymol.finish_launching()
+    pymol.cmd.delete("all")
+    pymol.cmd.load(alphaStore.uniprot_dict[uniprot])
+    obj_name = alphaStore.uniprot_dict[uniprot].split("/")[-1].split(".")[0]
+
+    # Stylings
+    pymol.cmd.set('ray_trace_fog','0')
+    pymol.cmd.set('ray_shadows','0')
+    pymol.cmd.set('depth_cue','0')
+    pymol.cmd.bg_color('white')
+    pymol.cmd.set('antialias','4')
+    pymol.cmd.set('cartoon_transparency','0')
+    pymol.cmd.set('transparency','0.7')
+    pymol.cmd.set('ray_trace_mode','3')
+
+    # Color chains by confidnece based on Alphafold pLDDT
+    if color_chain_by_confidence:
+        _,_,_,model_confidence = alphaStore.load_dm(uniprot)
+
+        def conf_lvl(x):
+            """
+            Confidence Level
+                Very high (pLDDT > 90)
+                High (90 > pLDDT > 70)
+                Low (70 > pLDDT > 50)
+                Very low (pLDDT < 50)
+            """
+            if x>= 90:
+                return "very high"
+            elif x>= 70:
+                return "high"
+            elif x>= 50:
+                return "low"
+            else:
+                return "very low"
+
+        # Colors
+        colors = {"very high":"tv_blue","high":"lightblue","low":"yelloworange","very low":"orange"}
+
+        _df = pd.DataFrame((model_confidence.keys(),model_confidence.values())).T
+        _df['conf'] = _df.loc[:,1].apply(conf_lvl)
+        _df['colors'] = _df['conf'].apply(lambda x: colors[x])
+
+        for color in np.unique(_df['colors']):
+            pymol.cmd.color(color, 'resi {}'.format('+'.join(_df[_df['colors']==color][0].astype(int).astype(str))))
+
+    else:
+        pymol.cmd.color(chain_color, obj_name)
+
+    pymol.cmd.show('surface', obj_name)
+    pymol.cmd.remove('solvent')
+
+    if phosph_residues is not None:
+        pymol.cmd.show('spheres', 'resi {}'.format('+'.join(phosph_residues)))
+        pymol.cmd.color(phosph_color, 'resi {}'.format('+'.join(phosph_residues)))
+
+    if acetyl_residues is not None:
+        pymol.cmd.show('spheres', 'resi {}'.format('+'.join(acetyl_residues)))
+        pymol.cmd.color(acetyl_color, 'resi {}'.format('+'.join(acetyl_residues)))
+
+    if ubiq_residues is not None:
+        pymol.cmd.show('spheres', 'resi {}'.format('+'.join(ubiq_residues)))
+        pymol.cmd.color(ubiq_color, 'resi {}'.format('+'.join(ubiq_residues)))
+
+    pymol.cmd.save(session_name+'.pse')
+
 def buildPymol_from_result(entry: pd.Series, out_dir: Union[None, str] = None, include_idx_in_name: bool = False):
     """
     Build Pymol from entry.
