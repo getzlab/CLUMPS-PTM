@@ -3,6 +3,7 @@ import os
 from typing import Union
 import pandas as pd
 from tqdm import tqdm
+import numpy as np
 
 def buildPymol(
     pdb: str,
