@@ -79,7 +79,7 @@ def add_corrected_fdr(results_df: pd.DataFrame, thresh_num: float = 0.1, weight_
         else:
             _df_sam['fdr_thresh'] = thresh_num
             _df_sam['fdr_pass'] = _df_sam['fdr_max_pval'] <= thresh_num
-        _df_sam['fdr_corr'] = 1
+        _df_sam['fdr_corr'] = 1.0
 
         _,_df_sam.loc[_df_sam['fdr_pass'],'fdr_corr'],_,_ = multipletests(
             _df_sam[_df_sam['fdr_pass']]['clumpsptm_pval'], method='fdr_bh',
