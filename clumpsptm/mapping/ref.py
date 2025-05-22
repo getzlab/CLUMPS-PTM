@@ -135,7 +135,7 @@ def get_blast_hits_with_sifts(
 
         res.append(_res)
 
-    return pd.concat(res,1).T.set_index("query")
+    return pd.concat(res,axis=1).T.set_index("query")
 
 def get_blast_hits_with_alphafold(
     blasted_files: list,
@@ -197,7 +197,7 @@ def get_blast_hits_with_alphafold(
 
         res.append(_res)
 
-    return pd.concat(res,1).T.set_index("query")
+    return pd.concat(res,axis=1).T.set_index("query")
 
 def get_pdb_match(sifts_s, acc_df, pdbstore):
     """
@@ -322,7 +322,7 @@ def get_pdb_matches(
                 except:
                     print("Error loading: {}-{}".format(row["PDB"], row["CHAIN"]))
 
-            resd = pd.concat(resd,1)
+            resd = pd.concat(resd,axis=1)
             sifts_filt_df['proteins'] = acc
             sifts_filt_df = sifts_filt_df.astype(str)
 
