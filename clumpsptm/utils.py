@@ -211,4 +211,7 @@ def generate_clumpsptm_output(
     if len(res_df) == 0:
         raise ValueError('NO RESULTS FILES FOUND.')
 
+    if all(v is None for v in res_df):
+        raise ValueError('NO VALID RESULTS FOUND AFTER FILTERING.')
+
     return pd.concat(res_df)
